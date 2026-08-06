@@ -1,0 +1,1057 @@
+diff --git a/engine/backend/engine_loop.py b/engine/backend/engine_loop.py
+index 8e9e683..da70114 100644
+--- a/engine/backend/engine_loop.py
++++ b/engine/backend/engine_loop.py
+@@ -69,7 +69,7 @@ import numpy as np
+ import torch
+ 
+ from ..core.mlfq import MLFQConfig, MLFQMeta, MLFQScheduler
+-from ..core.extensions import EngineExtensions
++from ..core.extensions import EngineExtensions, capture_c2w_state, invoke_policy
+ from ..core.types import (
+     EngineRequest,
+     EngineResult,
+@@ -802,6 +802,146 @@ class EngineLoop:
+                 batched,
+             )
+ 
++    def _extension_context_for(
++        self,
++        group: EngineSessionGroup,
++        seg: EngineSegment,
++    ):
++        policy = group.extension_continuity
++        if policy is None or seg.segment_idx <= 0:
++            return None
++        return invoke_policy(
++            policy,
++            "context_for",
++            seg.segment_idx,
++            cur_text_len=len(seg.pending_token_ids),
++            input_complete=seg.input_complete,
++            default=None,
++        )
++
++    def _extension_holds_admission(
++        self,
++        group: EngineSessionGroup,
++        seg: EngineSegment,
++    ) -> bool:
++        policy = group.extension_continuity
++        if policy is None:
++            return False
++        ready = invoke_policy(
++            policy,
++            "ready_to_admit",
++            seg.segment_idx,
++            default=True,
++        )
++        if not bool(ready):
++            return True
++        return bool(
++            invoke_policy(
++                policy,
++                "should_wait_for_text",
++                seg.segment_idx,
++                len(seg.pending_token_ids),
++                seg.input_complete,
++                default=False,
++            )
++        )
++
++    def _extension_restore_context(
++        self,
++        group: EngineSessionGroup,
++        seg: EngineSegment,
++        context,
++    ) -> bool:
++        if context is None or seg.slot is None:
++            return context is None
++        try:
++            restored = self._executor.apply_c2w_warm_state(
++                seg.slot,
++                context.c2w_kv,
++                context.c2w_conv,
++                context.c2w_transconv,
++                context.c2w_frame_idx,
++            )
++        except Exception:
++            logger.exception(
++                "External continuation restore failed for %s seg=%d",
++                seg.session_id,
++                seg.segment_idx,
++            )
++            restored = False
++        if not restored:
++            invoke_policy(
++                group.extension_continuity,
++                "invalidate",
++                "c2w_restore_failed",
++            )
++        return bool(restored)
++
++    def _extension_prepare_bridge(
++        self,
++        group: EngineSessionGroup,
++        seg: EngineSegment,
++        slot: SlotKVState,
++    ) -> bool:
++        policy = group.extension_continuity
++        if policy is None or self._prefill_builder is None or not seg.pending_token_ids:
++            return False
++        prepare = getattr(policy, "prepare_bridge", None)
++        if not callable(prepare):
++            return False
++        weights = self._prefill_builder.w
++        ids = torch.tensor(
++            [list(seg.pending_token_ids)],
++            device=weights.device,
++            dtype=torch.int64,
++        )
++        with torch.no_grad():
++            memory = weights.text_embed(ids)[0]
++        state = invoke_policy(
++            policy,
++            "prepare_bridge",
++            seg.segment_idx,
++            memory,
++            default=None,
++        )
++        if state is None:
++            return False
++        slot.extension_state["continuity_bridge"] = state
++        slot.next_embed = self._extension_apply_bridge(
++            group,
++            slot,
++            query=None,
++            base=slot.next_embed,
++        )
++        return True
++
++    def _extension_apply_bridge(
++        self,
++        group: EngineSessionGroup,
++        slot: SlotKVState,
++        *,
++        query: Optional[torch.Tensor],
++        base: Optional[torch.Tensor],
++    ) -> Optional[torch.Tensor]:
++        if base is None:
++            return None
++        state = slot.extension_state.get("continuity_bridge")
++        if state is None or group.extension_continuity is None:
++            return base.to(torch.float32)
++        updated = invoke_policy(
++            group.extension_continuity,
++            "apply_bridge",
++            state,
++            query=query,
++            base=base,
++            current_text_index=int(slot.text_idx),
++            default=base.to(torch.float32),
++        )
++        slot.extension_state["continuity_bridge_apply_count"] = int(
++            slot.extension_state.get("continuity_bridge_apply_count", 0)
++        ) + 1
++        return updated
++
+     def _prefix_cache_admittable(
+         self,
+         group: EngineSessionGroup,
+@@ -815,6 +955,8 @@ class EngineLoop:
+         """
+         if self._prefill_builder is None:
+             return False
++        if self._extension_context_for(group, seg) is not None:
++            return False
+         if not seg.prefix_probe_done:
+             seg.prefix_probe_done = True
+             req_cfg = group.request.session_config
+@@ -887,6 +1029,8 @@ class EngineLoop:
+                     continue
+                 if not seg.pending_token_ids:
+                     continue
++                if self._extension_holds_admission(group, seg):
++                    continue
+                 candidates.append((seg, group))
+         if not candidates:
+             return 0
+@@ -1072,6 +1216,8 @@ class EngineLoop:
+                     continue
+                 if not seg.pending_token_ids:
+                     continue
++                if self._extension_holds_admission(group, seg):
++                    continue
+                 if best is None or seg.priority.value < best.priority.value:
+                     best = seg
+                     best_group = group
+@@ -1088,6 +1234,7 @@ class EngineLoop:
+         slot.retry_idx = best.retry_idx
+         self._seg_by_slot[slot.slot_id] = best
+         self._mlfq.on_segment_created(best.mlfq_meta)
++        extension_context = self._extension_context_for(best_group, best)
+ 
+         if self._prefill_builder is not None:
+             req_cfg = best_group.request.session_config
+@@ -1128,7 +1275,7 @@ class EngineLoop:
+             # codec frames plus target text.
+             cache_key = None
+             cached = None
+-            if task_type != TaskType.VOICE_CLONE_ICL:
++            if task_type != TaskType.VOICE_CLONE_ICL and extension_context is None:
+                 cache_key = self._prefill_builder.compute_cache_key(
+                     task_type,
+                     req_cfg.language if req_cfg is not None else "auto",
+@@ -1151,6 +1298,7 @@ class EngineLoop:
+                 task_type != TaskType.VOICE_CLONE_ICL
+                 and cached is not None
+                 and best.pending_token_ids
++                and extension_context is None
+             ):
+                 # ── Cache HIT: restore prefix KV and let decode consume first text token ──
+                 best.cache_hit = True
+@@ -1302,6 +1450,15 @@ class EngineLoop:
+                 ),
+             )
+ 
++        if extension_context is not None:
++            if self._extension_restore_context(best_group, best, extension_context):
++                prefill_metrics["extension_continuity"] = "restored"
++            else:
++                extension_context = None
++                prefill_metrics["extension_continuity"] = "fallback"
++        if self._extension_prepare_bridge(best_group, best, slot):
++            prefill_metrics["extension_bridge"] = "prepared"
++
+         # Serial admissions (cold TRT prefill, ICL, serial cache hit) produce
+         # freestanding C2W state tensors; move them into the slot's arena
+         # rows so the post-step scatter stays batched for every active slot.
+@@ -1642,7 +1799,18 @@ class EngineLoop:
+             return
+         text_add = slot.trailing[slot.text_idx].to(slot.last_codec_sum.dtype)
+         slot.text_idx += 1
+-        slot.next_embed = (slot.last_codec_sum + text_add).to(torch.float32)
++        group = self._groups.get(seg.session_id)
++        base = slot.last_codec_sum + text_add
++        slot.next_embed = (
++            self._extension_apply_bridge(
++                group,
++                slot,
++                query=slot.extension_state.pop("continuity_last_query", None),
++                base=base,
++            )
++            if group is not None
++            else base.to(torch.float32)
++        )
+         slot.last_codec_sum = None
+         slot.pad_start_frame = -1
+         slot.pad_consecutive_silence = 0
+@@ -1892,8 +2060,9 @@ class EngineLoop:
+             group = self._groups.get(seg.session_id)
+             if group is None:
+                 continue
++            is_codec_eos = bool(output.eos_flags[i])
+ 
+-            if output.batch_c2w_kv is not None:
++            if not is_codec_eos and output.batch_c2w_kv is not None:
+                 if slot.c2w_pooled:
+                     # Deferred: one batched sliding-window append for all
+                     # pooled slots after this loop.
+@@ -1921,22 +2090,23 @@ class EngineLoop:
+                             [slot.talker_kv, kv], dim=3
+                         ).contiguous()
+ 
+-            if output.used_pingpong and slot.pingpong_ready:
++            if not is_codec_eos and output.used_pingpong and slot.pingpong_ready:
+                 # batch=1 zero-copy: TRT wrote directly to write bufs
+                 slot.flip_c2w_buffers()
+             elif (
+-                slot.pingpong_ready
++                not is_codec_eos
++                and slot.pingpong_ready
+                 and slot.c2w_arena_backed
+                 and output.batch_c2w_conv is not None
+             ):
+                 # batch>1 arena-backed: deferred to one indexed copy per
+                 # state for the whole batch (see flush after this loop).
+                 arena_scatter.append((slot, i))
+-            elif slot.pingpong_ready:
++            elif not is_codec_eos and slot.pingpong_ready:
+                 # batch>1 legacy per-slot copy into write bufs
+                 conv_rows, transconv_rows = self._c2w_output_rows(output, i)
+                 slot.copy_c2w_and_flip(conv_rows, transconv_rows)
+-            else:
++            elif not is_codec_eos:
+                 # Fallback: clone (first step or non-pingpong slot)
+                 conv_rows, transconv_rows = self._c2w_output_rows(output, i)
+                 if conv_rows:
+@@ -1950,27 +2120,57 @@ class EngineLoop:
+             if updated_tc_rows is not None:
+                 slot.token_counts = updated_tc_rows[i]
+             slot.past_len += 1
+-            slot.frame_idx += 1
++            if not is_codec_eos:
++                slot.frame_idx += 1
+             slot.touch()
+             self._mlfq.on_step_done(seg.mlfq_meta)
+ 
+             # --- Determine text_add and track pad phase ---
+             in_pad = False
+-            if output.codec_sum is not None:
++            acoustic_query = (
++                output.hidden[i : i + 1]
++                if output.hidden is not None and not is_codec_eos
++                else None
++            )
++            current_text_index = int(slot.text_idx)
++            if (
++                acoustic_query is not None
++                and current_text_index < len(seg.pending_token_ids)
++            ):
++                invoke_policy(
++                    group.extension_continuity,
++                    "observe_hidden",
++                    seg.segment_idx,
++                    current_text_index,
++                    acoustic_query,
++                )
++            if is_codec_eos:
++                slot.next_embed = None
++                slot.last_codec_sum = None
++                slot.extension_state.pop("continuity_last_query", None)
++            elif output.codec_sum is not None:
+                 if slot.trailing and slot.text_idx < len(slot.trailing):
+                     text_add = slot.trailing[slot.text_idx].to(output.codec_sum.dtype)
+                     slot.text_idx += 1
+                     slot.pad_start_frame = -1
+                     slot.pad_consecutive_silence = 0
+                     slot.last_codec_sum = None
+-                    slot.next_embed = (output.codec_sum[i : i + 1] + text_add).to(
+-                        torch.float32
++                    slot.extension_state.pop("continuity_last_query", None)
++                    slot.next_embed = self._extension_apply_bridge(
++                        group,
++                        slot,
++                        query=acoustic_query,
++                        base=output.codec_sum[i : i + 1] + text_add,
+                     )
+                 elif not seg.input_complete:
+                     # True streaming pause: preserve the latest codec_sum and
+                     # wait for more text instead of injecting pad tokens, which
+                     # creates artificial silences and prosody discontinuities.
+                     slot.last_codec_sum = output.codec_sum[i : i + 1].clone()
++                    if acoustic_query is not None:
++                        slot.extension_state["continuity_last_query"] = (
++                            acoustic_query.detach().clone()
++                        )
+                     slot.next_embed = None
+                     slot.pad_start_frame = -1
+                     slot.pad_consecutive_silence = 0
+@@ -1985,10 +2185,14 @@ class EngineLoop:
+                     text_add = self._tts_pad_embed.to(output.codec_sum.dtype)
+                     in_pad = True
+                     slot.last_codec_sum = None
++                    slot.extension_state.pop("continuity_last_query", None)
+                     if slot.pad_start_frame < 0:
+                         slot.pad_start_frame = slot.frame_idx
+-                    slot.next_embed = (output.codec_sum[i : i + 1] + text_add).to(
+-                        torch.float32
++                    slot.next_embed = self._extension_apply_bridge(
++                        group,
++                        slot,
++                        query=acoustic_query,
++                        base=output.codec_sum[i : i + 1] + text_add,
+                     )
+             else:
+                 slot.next_embed = None
+@@ -2004,7 +2208,7 @@ class EngineLoop:
+                 else 0
+             )
+ 
+-            if output.eos_flags[i]:
++            if is_codec_eos:
+                 self._handle_natural_eos(group, seg)
+             else:
+                 audio = output.audio_chunks[i]
+@@ -2526,6 +2730,11 @@ class EngineLoop:
+             }
+ 
+         seg.retry_idx += 1
++        invoke_policy(
++            group.extension_continuity,
++            "reset_segment_capture",
++            seg.segment_idx,
++        )
+         self._release_segment_slot(seg)
+         seg.state = "pending_prefill"
+         seg.prefill_plan = None
+@@ -2659,6 +2868,28 @@ class EngineLoop:
+         if guard_mode:
+             metrics["guard_mode"] = guard_mode
+ 
++        if group.extension_continuity is not None:
++            if seg.slot is not None:
++                metrics["extension_bridge_apply_count"] = int(
++                    seg.slot.extension_state.get(
++                        "continuity_bridge_apply_count", 0
++                    )
++                )
++            c2w_state = capture_c2w_state(seg.slot, self._executor.kv_pool)
++            carried = invoke_policy(
++                group.extension_continuity,
++                "finalize_segment",
++                seg.segment_idx,
++                list(seg.pending_token_ids),
++                eos_reason=eos_reason,
++                audio_steps=audio_steps,
++                state=c2w_state,
++                input_complete=seg.input_complete,
++                consumed_text_tokens=text_tokens,
++                default=False,
++            )
++            metrics["extension_continuity_carried"] = bool(carried)
++
+         seg.state = "done"
+         self._release_segment_slot(seg)
+ 
+diff --git a/engine/backend/executor.py b/engine/backend/executor.py
+index 36027c2..2754d79 100644
+--- a/engine/backend/executor.py
++++ b/engine/backend/executor.py
+@@ -424,6 +424,7 @@ class GPUFuture:
+ 
+         wav = raw.get("wav")
+         codec_sum = raw.get("codec_sum")
++        hidden = raw.get("hidden")
+         full_codec = raw.get("full_codec")
+         updated_tc = raw.get("updated_token_counts")
+ 
+@@ -453,7 +454,7 @@ class GPUFuture:
+ 
+         for row_idx in range(batch_size):
+             eos_flags.append(eos_list[row_idx])
+-            if wav_cpu is not None:
++            if wav_cpu is not None and not eos_list[row_idx]:
+                 chunk = wav_cpu[row_idx].reshape(-1).numpy()
+                 audio_chunks.append(chunk.tobytes())
+             else:
+@@ -471,6 +472,7 @@ class GPUFuture:
+             batch_c2w_conv=conv_tensors,
+             batch_c2w_transconv=transconv_tensors,
+             codec_sum=codec_sum,
++            hidden=hidden,
+             updated_tc=updated_tc,
+             used_pingpong=self._used_pingpong,
+         )
+@@ -508,6 +510,8 @@ class StepOutput:
+     batch_c2w_conv: Optional[List[Optional[torch.Tensor]]] = None
+     batch_c2w_transconv: Optional[List[Optional[torch.Tensor]]] = None
+     codec_sum: Optional[torch.Tensor] = None
++    # Final normalized Talker state; exposed for optional acoustic observers.
++    hidden: Optional[torch.Tensor] = None
+     updated_tc: Optional[torch.Tensor] = None
+     used_pingpong: bool = False
+ 
+@@ -1449,7 +1453,14 @@ class Executor:
+         kv = c2w_kv.to(device=self._device, dtype=self._config.dtype).contiguous()
+         if kv.shape[3] > max_past:
+             kv = kv[:, :, :, -max_past:, :].contiguous()
+-        slot.c2w_kv = kv
++        if self._kv_pool._preallocate and self._kv_pool._c2w_kv_pool is not None:
++            slot.c2w_len = self._kv_pool.write_c2w_right_aligned(slot.slot_id, kv)
++            slot.c2w_kv = None
++            slot.c2w_pooled = True
++        else:
++            slot.c2w_kv = kv
++            slot.c2w_len = int(kv.shape[3])
++            slot.c2w_pooled = False
+         slot.c2w_conv_states = [
+             t.to(device=self._device, dtype=self._config.dtype).contiguous()
+             for t in conv_states
+diff --git a/engine/backend/kv_cache_pool.py b/engine/backend/kv_cache_pool.py
+index 11b65f9..aeb2764 100644
+--- a/engine/backend/kv_cache_pool.py
++++ b/engine/backend/kv_cache_pool.py
+@@ -26,7 +26,7 @@ from __future__ import annotations
+ import logging
+ import time
+ from dataclasses import dataclass, field
+-from typing import Optional
++from typing import Any, Optional
+ 
+ import torch
+ 
+@@ -124,6 +124,9 @@ class SlotKVState:
+     # Appended text token IDs for streaming APPEND_TOKENS
+     token_queue: list = field(default_factory=list)
+ 
++    # Opaque state owned by optional external lifecycle policies.
++    extension_state: dict[str, Any] = field(default_factory=dict)
++
+     # Pad phase tracking (aligned with old engine's Phase B controls)
+     pad_start_frame: int = -1
+     pad_consecutive_silence: int = 0
+@@ -311,6 +314,7 @@ class KVCachePool:
+         slot.text_idx = 0
+         slot.trailing = []
+         slot.token_queue = []
++        slot.extension_state = {}
+         slot.pad_start_frame = -1
+         slot.pad_consecutive_silence = 0
+         slot.sampling_identity = None
+@@ -352,6 +356,7 @@ class KVCachePool:
+         slot.text_idx = 0
+         slot.trailing = []
+         slot.token_queue = []
++        slot.extension_state = {}
+         slot.pad_start_frame = -1
+         slot.pad_consecutive_silence = 0
+         slot.sampling_identity = None
+@@ -472,6 +477,23 @@ class KVCachePool:
+             row[:, :, width - s_len :, :] = kv[0, :, :, -s_len:, :]
+         return s_len
+ 
++    def read_c2w_right_aligned(self, slot_id: int, length: int) -> torch.Tensor:
++        """Clone the valid right-aligned C2W KV prefix for an extension."""
++
++        if self._c2w_kv_pool is None:
++            raise RuntimeError("Pool not pre-allocated")
++        width = int(self._c2w_kv_pool.shape[3])
++        valid = min(max(0, int(length)), max(0, width - 1))
++        if valid == 0:
++            return self._c2w_kv_pool[slot_id : slot_id + 1, :, :, :0, :].clone()
++        return self._c2w_kv_pool[
++            slot_id : slot_id + 1,
++            :,
++            :,
++            width - valid :,
++            :,
++        ].clone()
++
+     def append_c2w_frames(
+         self,
+         slot_ids: list[int],
+diff --git a/engine/core/extensions.py b/engine/core/extensions.py
+index 6d07f99..1be8e37 100644
+--- a/engine/core/extensions.py
++++ b/engine/core/extensions.py
+@@ -6,10 +6,14 @@ depend on any external extension implementation.
+ 
+ from __future__ import annotations
+ 
++import logging
+ from dataclasses import dataclass
+ from typing import Any, Callable, Optional
+ 
+ 
++logger = logging.getLogger(__name__)
++
++
+ PolicyFactory = Callable[[str, Any], Any]
+ 
+ 
+@@ -26,3 +30,73 @@ class EngineExtensions:
+     version: str = ""
+     commitment_factory: Optional[PolicyFactory] = None
+     continuity_factory: Optional[PolicyFactory] = None
++
++
++@dataclass(frozen=True)
++class C2WContinuationState:
++    """Engine-owned immutable view of a finalized Code2Wav state bundle."""
++
++    c2w_kv: Any
++    c2w_conv_states: tuple[Any, ...]
++    c2w_transconv_states: tuple[Any, ...]
++    frame_idx: int
++
++
++def capture_c2w_state(slot: Any, kv_pool: Any = None) -> Optional[C2WContinuationState]:
++    """Deep-copy a complete C2W bundle without exposing a mutable engine slot."""
++
++    try:
++        if getattr(slot, "c2w_kv", None) is not None:
++            kv = slot.c2w_kv.detach().clone()
++        elif getattr(slot, "c2w_pooled", False) and kv_pool is not None:
++            kv = kv_pool.read_c2w_right_aligned(
++                slot.slot_id, int(getattr(slot, "c2w_len", 0))
++            )
++        else:
++            return None
++        conv = tuple(
++            item.detach().clone()
++            for item in (getattr(slot, "c2w_conv_states", None) or ())
++        )
++        transconv = tuple(
++            item.detach().clone()
++            for item in (getattr(slot, "c2w_transconv_states", None) or ())
++        )
++        if not conv or not transconv:
++            return None
++        return C2WContinuationState(
++            c2w_kv=kv,
++            c2w_conv_states=conv,
++            c2w_transconv_states=transconv,
++            frame_idx=int(getattr(slot, "frame_idx", 0)),
++        )
++    except Exception:
++        logger.exception("Could not capture finalized Code2Wav state")
++        return None
++
++
++def invoke_policy(
++    policy: Any,
++    method: str,
++    *args: Any,
++    default: Any = None,
++    **kwargs: Any,
++) -> Any:
++    """Invoke one optional policy callback and fail closed to ``default``."""
++
++    if policy is None:
++        return default
++    callback = getattr(policy, method, None)
++    if not callable(callback):
++        return default
++    try:
++        return callback(*args, **kwargs)
++    except Exception:
++        logger.exception("External policy callback failed: %s", method)
++        invalidate = getattr(policy, "invalidate", None)
++        if callable(invalidate) and method != "invalidate":
++            try:
++                invalidate(f"callback_failed:{method}")
++            except Exception:
++                logger.exception("External policy invalidation failed")
++        return default
+diff --git a/engine/core/types.py b/engine/core/types.py
+index bab2c02..1e0d91a 100644
+--- a/engine/core/types.py
++++ b/engine/core/types.py
+@@ -105,6 +105,7 @@ class SegmentToken:
+     token_id: int
+     text: str
+     punct_level: int = 0
++    boundary_before: str = ""
+ 
+ 
+ @dataclass
+diff --git a/engine/frontend/interface.py b/engine/frontend/interface.py
+index 7ad1557..f6b64f9 100644
+--- a/engine/frontend/interface.py
++++ b/engine/frontend/interface.py
+@@ -30,7 +30,7 @@ from ..core.types import (
+ from ..core.lifecycle import LifecycleLogger
+ from ..core import observability as obs
+ from ..core.timing import ServerTimingAccumulator
+-from ..core.extensions import EngineExtensions
++from ..core.extensions import EngineExtensions, invoke_policy
+ from ..text_normalization import strip_emoji, split_pending_emoji
+ from ..interface.output import ENGINE_SAMPLE_RATE
+ from .dispatcher import Dispatcher
+@@ -142,25 +142,58 @@ class FrontendInterface:
+         self._prepare_session_config(config)
+ 
+         session = Session(session_id=session_id, config=config)
++        if self._extensions.commitment_factory is not None:
++            try:
++                session.extension_commitment = self._extensions.commitment_factory(
++                    session_id, config
++                )
++            except Exception:
++                logger.exception("Commitment policy factory failed for %s", session_id)
++        split_config = invoke_policy(
++            session.extension_commitment,
++            "splitter_config",
++            default={},
++        )
++        if not isinstance(split_config, dict):
++            split_config = {}
+         session.spliter = Spliter(
+-            engine_max_decode_len=self._engine_max,
+-            prefill_len=self._prefill_len,
+-            ema_ratio=self._ema_ratio,
++            engine_max_decode_len=int(
++                split_config.get("engine_max_decode_len", self._engine_max)
++            ),
++            prefill_len=int(split_config.get("prefill_len", self._prefill_len)),
++            ema_ratio=float(split_config.get("ema_ratio", self._ema_ratio)),
+             max_concurrent=self._max_concurrent,
+-            ema_alpha=self._ema_alpha,
+-            ema_overflow_alpha=self._ema_overflow_alpha,
+-            ema_min_ratio=self._ema_min_ratio,
+-            ema_max_ratio=self._ema_max_ratio,
+-            safety_margin=self._safety_margin,
+-            l1_split_cap_ratio=self._l1_split_cap_ratio,
+-            l2_split_cap_ratio=self._l2_split_cap_ratio,
+-            l3_split_cap_ratio=self._l3_split_cap_ratio,
++            ema_alpha=float(split_config.get("ema_alpha", self._ema_alpha)),
++            ema_overflow_alpha=float(
++                split_config.get("ema_overflow_alpha", self._ema_overflow_alpha)
++            ),
++            ema_min_ratio=float(
++                split_config.get("ema_min_ratio", self._ema_min_ratio)
++            ),
++            ema_max_ratio=float(
++                split_config.get("ema_max_ratio", self._ema_max_ratio)
++            ),
++            safety_margin=int(
++                split_config.get("safety_margin", self._safety_margin)
++            ),
++            l1_split_cap_ratio=float(
++                split_config.get("l1_split_cap_ratio", self._l1_split_cap_ratio)
++            ),
++            l2_split_cap_ratio=float(
++                split_config.get("l2_split_cap_ratio", self._l2_split_cap_ratio)
++            ),
++            l3_split_cap_ratio=float(
++                split_config.get("l3_split_cap_ratio", self._l3_split_cap_ratio)
++            ),
++            threshold_provider=(
++                session.extension_commitment.split_thresholds
++                if callable(
++                    getattr(session.extension_commitment, "split_thresholds", None)
++                )
++                else None
++            ),
+         )
+         session.reorder = AudioReorder()
+-        if self._extensions.commitment_factory is not None:
+-            session.extension_commitment = self._extensions.commitment_factory(
+-                session_id, config
+-            )
+         session.event_callback = on_event
+         self._sessions[session_id] = session
+ 
+@@ -277,7 +310,7 @@ class FrontendInterface:
+                 normalized_preview=obs.text_preview(text),
+             )
+ 
+-        tokens = self._tokenize_segment_text(text)
++        tokens = self._tokenize_committed_text(session, text)
+         if not tokens:
+             return
+ 
+@@ -302,7 +335,8 @@ class FrontendInterface:
+         if not text:
+             return
+ 
+-        tokens = self._tokenize_segment_text(text)
++        invoke_policy(session.extension_commitment, "reset")
++        tokens = self._tokenize_committed_text(session, text, final=True)
+         if not tokens:
+             return
+ 
+@@ -336,6 +370,20 @@ class FrontendInterface:
+             session._emoji_carry = ""
+             await self._ingest_streaming_text(session, body)
+ 
++        final_tokens = self._tokenize_committed_text(session, "", final=True)
++        if final_tokens:
++            spliter: Spliter = session.spliter
++            if mode == InputMode.AUTO:
++                final_actions = spliter.feed_auto(final_tokens)
++            elif (
++                mode == InputMode.LONG_SEGMENT
++                and session.config.group_policy != GroupPolicy.NONE
++            ):
++                final_actions = spliter.push_group_tokens(final_tokens)
++            else:
++                final_actions = spliter.feed_tokens(final_tokens)
++            await self._dispatch_segment_actions(session, final_actions)
++
+         if (
+             mode == InputMode.LONG_SEGMENT
+             and session.config.group_policy != GroupPolicy.NONE
+@@ -736,11 +784,23 @@ class FrontendInterface:
+                             and text_tokens > 0
+                             and not eos_reason.endswith("_abort")
+                         ):
+-                            session.spliter.update_ratio(
+-                                audio_steps,
+-                                text_tokens,
+-                                overflow=overflow,
+-                            )
++                            if session.extension_commitment is not None:
++                                ratio = invoke_policy(
++                                    session.extension_commitment,
++                                    "observe_segment",
++                                    audio_steps=int(audio_steps),
++                                    text_tokens=int(text_tokens),
++                                    overflow=bool(overflow),
++                                    default=None,
++                                )
++                                if ratio is not None:
++                                    session.spliter._ema_ratio = float(ratio)
++                            else:
++                                session.spliter.update_ratio(
++                                    audio_steps,
++                                    text_tokens,
++                                    overflow=overflow,
++                                )
+ 
+                     if on_event:
+                         metrics = {
+@@ -1149,6 +1209,32 @@ class FrontendInterface:
+             for token_id, token_text in zip(ids, texts)
+         ]
+ 
++    def _tokenize_committed_text(
++        self,
++        session: Session,
++        text: str,
++        *,
++        final: bool = False,
++    ) -> list[SegmentToken]:
++        """Tokenize only spans released by an optional commitment policy."""
++
++        policy = session.extension_commitment
++        if policy is None:
++            return self._tokenize_segment_text(text)
++        spans = invoke_policy(policy, "feed_text", text, final=final, default=None)
++        if spans is None:
++            session.extension_commitment = None
++            return self._tokenize_segment_text(text)
++        tokens: list[SegmentToken] = []
++        for span in spans:
++            span_tokens = self._tokenize_segment_text(str(span.text))
++            if span_tokens and bool(getattr(span, "boundary_before", False)):
++                span_tokens[0].boundary_before = str(
++                    getattr(span, "rule_name", "") or "extension"
++                )
++            tokens.extend(span_tokens)
++        return tokens
++
+     def _encode_ids(self, text: str) -> list[int]:
+         if hasattr(self._tokenizer, "encode_ids"):
+             return list(self._tokenizer.encode_ids(text, add_special_tokens=False))
+diff --git a/engine/frontend/spliter/spliter.py b/engine/frontend/spliter/spliter.py
+index aa5b529..1f7f37b 100644
+--- a/engine/frontend/spliter/spliter.py
++++ b/engine/frontend/spliter/spliter.py
+@@ -24,7 +24,7 @@ from collections import deque
+ import logging
+ import unicodedata
+ from dataclasses import dataclass
+-from typing import Deque, List, Optional, Tuple
++from typing import Any, Callable, Deque, List, Optional, Tuple
+ 
+ from ...core.types import SegmentToken
+ from .driver import (
+@@ -108,6 +108,7 @@ class _PendingToken:
+     token: SegmentToken
+     group_idx: Optional[int]
+     boundary: bool = False
++    boundary_before: str = ""
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -146,6 +147,7 @@ class Spliter:
+         l1_split_cap_ratio: float = 0.70,
+         l2_split_cap_ratio: float = 0.80,
+         l3_split_cap_ratio: float = 0.90,
++        threshold_provider: Optional[Callable[[], Any]] = None,
+     ) -> None:
+         self._engine_max = engine_max_decode_len
+         self._prefill_len = prefill_len
+@@ -159,6 +161,7 @@ class Spliter:
+         self._l1_split_cap_ratio = l1_split_cap_ratio
+         self._l2_split_cap_ratio = l2_split_cap_ratio
+         self._l3_split_cap_ratio = l3_split_cap_ratio
++        self._threshold_provider = threshold_provider
+ 
+         # Unified pending-token queue. Replaces the old streaming token buffer
+         # and offline pre-split group deque: streaming and offline now feed one
+@@ -205,6 +208,12 @@ class Spliter:
+     def ema_ratio(self) -> float:
+         return self._ema_ratio
+ 
++    @property
++    def current_thresholds(self) -> SplitThresholds:
++        """Thresholds supplied to a segment opened at the current feedback state."""
++
++        return self._make_thresholds()
++
+     @property
+     def current_segment_idx(self) -> int:
+         """Index that will be assigned to the next segment created."""
+@@ -268,6 +277,19 @@ class Spliter:
+     # ------------------------------------------------------------------
+ 
+     def _make_thresholds(self) -> SplitThresholds:
++        if self._threshold_provider is not None:
++            try:
++                external = self._threshold_provider()
++                return SplitThresholds(
++                    min_tokens_l1=int(external.min_tokens_l1),
++                    min_tokens_l2=int(external.min_tokens_l2),
++                    min_tokens_l3=int(external.min_tokens_l3),
++                    force_split_at=int(external.force_split_at),
++                )
++            except Exception:
++                logger.exception(
++                    "External threshold provider failed; using upstream thresholds"
++                )
+         remaining_kv = self._engine_max - self._prefill_len
+         return compute_thresholds(
+             remaining_kv,
+@@ -543,7 +565,14 @@ class Spliter:
+             self._next_group_idx += 1
+             last = len(seg_tokens) - 1
+             for i, tok in enumerate(seg_tokens):
+-                self._pending.append(_PendingToken(tok, gid, boundary=(i == last)))
++                self._pending.append(
++                    _PendingToken(
++                        tok,
++                        gid,
++                        boundary=(i == last),
++                        boundary_before=tok.boundary_before,
++                    )
++                )
+ 
+     def push_group_tokens(
+         self,
+@@ -605,6 +634,20 @@ class Spliter:
+         flushed = False
+ 
+         while self._pending and self._pending[0].group_idx == cur_key:
++            pending = self._pending[0]
++            if pending.boundary_before and driver.token_count > 0:
++                end_actions, _ = self._results_to_actions(
++                    active_idx,
++                    driver.feed(SpliterEvent(type=ET.END)),
++                    group_idx=group_idx,
++                    local_idx=local_idx,
++                    group_final=is_stream,
++                )
++                out.extend(end_actions)
++                self._finalize_segment(active_idx, out, group_exhausted=True)
++                flushed = True
++                break
++
+             pt = self._pending.popleft()
+             evt = self._make_event(
+                 pt.token.token_id, pt.token.text, pt.token.punct_level
+@@ -743,7 +786,14 @@ class Spliter:
+         the shared pending queue. The driver decides flush points (no boundary).
+         """
+         for tok in self._coerce_tokens(tokens):
+-            self._pending.append(_PendingToken(tok, None, boundary=False))
++            self._pending.append(
++                _PendingToken(
++                    tok,
++                    None,
++                    boundary=False,
++                    boundary_before=tok.boundary_before,
++                )
++            )
+         return self._drive_events()
+ 
+     def feed_auto(
+@@ -784,7 +834,14 @@ class Spliter:
+             )  # won't fit remaining room: Stage 1 foresight
+         else:
+             for tok in coerced:  # fits: transparent stream (coalesce)
+-                self._pending.append(_PendingToken(tok, None, boundary=False))
++                self._pending.append(
++                    _PendingToken(
++                        tok,
++                        None,
++                        boundary=False,
++                        boundary_before=tok.boundary_before,
++                    )
++                )
+         return self._drive_events()
+ 
+     def input_done(self) -> List[SegmentAction]:
+diff --git a/tests/unit/engine_core/test_extension_lifecycle.py b/tests/unit/engine_core/test_extension_lifecycle.py
+new file mode 100644
+index 0000000..0c35c85
+--- /dev/null
++++ b/tests/unit/engine_core/test_extension_lifecycle.py
+@@ -0,0 +1,85 @@
++import torch
++
++from engine.backend.kv_cache_pool import KVCachePool, ModelConfig
++from engine.core.extensions import capture_c2w_state, invoke_policy
++from engine.core.types import SegmentToken
++from engine.frontend.spliter.driver import ActionType, SplitThresholds
++from engine.frontend.spliter.spliter import Spliter
++
++
++def test_policy_failure_invalidates_and_returns_fallback() -> None:
++    class Policy:
++        reason = ""
++
++        def explode(self):
++            raise RuntimeError("boom")
++
++        def invalidate(self, reason):
++            self.reason = reason
++
++    policy = Policy()
++
++    assert invoke_policy(policy, "explode", default="fallback") == "fallback"
++    assert policy.reason == "callback_failed:explode"
++
++
++def test_external_threshold_and_boundary_open_successor_segment() -> None:
++    thresholds = SplitThresholds(50, 50, 50, 60)
++    spliter = Spliter(threshold_provider=lambda: thresholds, max_concurrent=2)
++
++    first = spliter.feed_tokens([SegmentToken(1, "温")])
++    boundary = spliter.feed_tokens(
++        [SegmentToken(2, "度", boundary_before="numeric_suffix")]
++    )
++    assert spliter.current_thresholds == thresholds
++    assert any(item.action.type == ActionType.FLUSH_EOS for item in boundary)
++    assert any(
++        item.segment_idx == 1 and item.action.type == ActionType.PREFILL
++        for item in boundary
++    )
++    assert any(item.action.type == ActionType.PREFILL for item in first)
++
++
++def test_c2w_pool_right_aligned_snapshot_round_trip() -> None:
++    config = ModelConfig(
++        num_layers=1,
++        kv_heads=1,
++        head_dim=1,
++        max_seq_len=4,
++        n_c2w_layers=1,
++        c2w_kv_heads=1,
++        c2w_head_dim=1,
++        c2w_sliding_window=5,
++        dtype=torch.float32,
++    )
++    pool = KVCachePool(1, config, device="cpu", preallocate=True)
++    state = torch.tensor([[[[[1.0], [2.0], [3.0]]], [[[4.0], [5.0], [6.0]]]]])
++
++    pool.write_c2w_right_aligned(0, state)
++    restored = pool.read_c2w_right_aligned(0, 3)
++
++    torch.testing.assert_close(restored, state)
++    state.zero_()
++    assert restored.sum().item() == 21.0
++
++
++def test_finalized_c2w_view_is_complete_and_deep_owned() -> None:
++    slot = type(
++        "Slot",
++        (),
++        {
++            "c2w_kv": torch.ones(1, 1, 1, 1, 1),
++            "c2w_conv_states": [torch.full((1,), 2.0)],
++            "c2w_transconv_states": [torch.full((1,), 3.0)],
++            "frame_idx": 7,
++        },
++    )()
++
++    state = capture_c2w_state(slot)
++
++    assert state is not None
++    assert state.frame_idx == 7
++    slot.c2w_kv.zero_()
++    slot.c2w_conv_states[0].zero_()
++    assert state.c2w_kv.item() == 1.0
++    assert state.c2w_conv_states[0].item() == 2.0

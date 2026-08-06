@@ -1,0 +1,36 @@
+{
+  "schema": "x2streaming_source_provenance_v1",
+  "extracted_at": "2026-08-06",
+  "source_repository": "X2Streaming-TTS-review (local extraction source)",
+  "source_head": "cac16b9",
+  "source_worktree_had_uncommitted_changes": true,
+  "upstream_comparison_baseline": "0f3d91dd6a3794d51928452ca3eeb1d0c876fd38",
+  "upstream_release_baseline": "0745e4a8613f0780cc57475452ee775a9abac2dd",
+  "files": [
+    {
+      "destination": "src/x2streaming_tts/commitment/capacity.py",
+      "source": "engine/frontend/spliter/driver.py and engine/frontend/spliter/spliter.py",
+      "classification": "x2-method-extraction"
+    },
+    {
+      "destination": "src/x2streaming_tts/commitment/rule_boundary.py",
+      "source": "engine/frontend/rule_boundary.py",
+      "classification": "x2-method"
+    },
+    {
+      "destination": "src/x2streaming_tts/commitment/text_normalizer.py",
+      "source": "engine/frontend/text_normalizer.py",
+      "classification": "x2-support"
+    },
+    {
+      "destination": "src/x2streaming_tts/commitment/text_normalization.py",
+      "source": "engine/text_normalization.py",
+      "classification": "x2-support"
+    },
+    {
+      "destination": "src/x2streaming_tts/inheritance/speech_state_inheritance.py",
+      "source": "engine/backend/continuity.py",
+      "classification": "x2-method"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+X2Streaming-TTS
+Copyright (c) 2026 XSquareRobot
+
+This repository contains the X2Streaming-TTS method implementation and is
+released under the MIT License. It uses Qwen3TTS-Streaming as an external git
+submodule; no upstream engine source is vendored into the X2Streaming-TTS
+Python package.
+
+Third-party source and runtime components retain their own licenses. See
+THIRD_PARTY.md and the NOTICE files inside each submodule.
+

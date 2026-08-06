@@ -1,0 +1,3 @@
+[submodule "third_party/Qwen3TTS-Streaming"]
+	path = third_party/Qwen3TTS-Streaming
+	url = https://github.com/X-Square-Robot/Qwen3TTS-Streaming.git

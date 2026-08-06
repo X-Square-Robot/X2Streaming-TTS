@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use X2Streaming-TTS, cite the accompanying paper and the upstream Qwen3TTS-Streaming software."
+title: "X2Streaming-TTS"
+type: software
+version: 0.1.0.dev0
+date-released: 2026-08-06
+license: MIT
+repository-code: "https://github.com/X-Square-Robot/X2Streaming-TTS"
+

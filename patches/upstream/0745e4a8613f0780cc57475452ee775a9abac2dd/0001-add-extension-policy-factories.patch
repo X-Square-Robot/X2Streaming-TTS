@@ -1,0 +1,205 @@
+diff --git a/engine/backend/engine_loop.py b/engine/backend/engine_loop.py
+index 3001039..8e9e683 100644
+--- a/engine/backend/engine_loop.py
++++ b/engine/backend/engine_loop.py
+@@ -69,6 +69,7 @@ import numpy as np
+ import torch
+ 
+ from ..core.mlfq import MLFQConfig, MLFQMeta, MLFQScheduler
++from ..core.extensions import EngineExtensions
+ from ..core.types import (
+     EngineRequest,
+     EngineResult,
+@@ -191,9 +192,15 @@ class EngineSessionGroup:
+         "created_at",
+         "overflow_token_ids",
+         "first_text_dequeued_at",
++        "extension_continuity",
+     )
+ 
+-    def __init__(self, session_id: str, request: EngineRequest):
++    def __init__(
++        self,
++        session_id: str,
++        request: EngineRequest,
++        extensions: Optional[EngineExtensions] = None,
++    ):
+         self.session_id = session_id
+         self.request = request
+         self.result_queue: Optional[asyncio.Queue] = request.result_queue
+@@ -202,6 +209,12 @@ class EngineSessionGroup:
+         self.created_at: float = time.monotonic()
+         self.overflow_token_ids: list[int] = []
+         self.first_text_dequeued_at: Optional[float] = None
++        extension_set = extensions or EngineExtensions()
++        self.extension_continuity = (
++            extension_set.continuity_factory(session_id, request.session_config)
++            if extension_set.continuity_factory is not None
++            else None
++        )
+ 
+     @property
+     def active_slot_count(self) -> int:
+@@ -265,6 +278,7 @@ class EngineLoop:
+         token_loop_max_retries: int = 1,
+         length_runaway_ratio: float = 10.0,
+         max_slots_per_session: int = 2,
++        extensions: Optional[EngineExtensions] = None,
+     ):
+         self._inbox = engine_inbox
+         self._async_loop = async_loop
+@@ -296,6 +310,7 @@ class EngineLoop:
+         self._token_loop_max_retries = max(0, int(token_loop_max_retries))
+         self._length_runaway_ratio = max(1.0, float(length_runaway_ratio))
+         self._max_slots_per_session = max(1, int(max_slots_per_session))
++        self._extensions = extensions or EngineExtensions()
+ 
+         self._groups: Dict[str, EngineSessionGroup] = {}
+         self._seg_by_slot: Dict[int, EngineSegment] = {}
+@@ -621,7 +636,7 @@ class EngineLoop:
+                     req.session_id,
+                 )
+                 self._remove_session(req.session_id)
+-            group = EngineSessionGroup(req.session_id, req)
++            group = EngineSessionGroup(req.session_id, req, self._extensions)
+             self._groups[req.session_id] = group
+             self._total_sessions += 1
+             logger.debug("New session group: %s", req.session_id)
+@@ -2789,6 +2804,9 @@ class EngineLoop:
+         group = self._groups.pop(session_id, None)
+         if group is None:
+             return
++        policy = group.extension_continuity
++        if policy is not None and hasattr(policy, "invalidate"):
++            policy.invalidate("session_removed")
+         for seg in group.segments.values():
+             self._release_segment_slot(seg)
+ 
+diff --git a/engine/core/extensions.py b/engine/core/extensions.py
+new file mode 100644
+index 0000000..6d07f99
+--- /dev/null
++++ b/engine/core/extensions.py
+@@ -0,0 +1,28 @@
++"""Optional lifecycle extension factories for external engine policies.
++
++This module contains contracts only. Qwen3TTS-Streaming does not import or
++depend on any external extension implementation.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Callable, Optional
++
++
++PolicyFactory = Callable[[str, Any], Any]
++
++
++@dataclass(frozen=True)
++class EngineExtensions:
++    """Factories for session-scoped optional policies.
++
++    Factories receive ``(session_id, session_config)`` and return an opaque
++    policy owned by the corresponding frontend/backend session. Lifecycle
++    call sites are added independently, keeping this contract method-agnostic.
++    """
++
++    name: str = ""
++    version: str = ""
++    commitment_factory: Optional[PolicyFactory] = None
++    continuity_factory: Optional[PolicyFactory] = None
+diff --git a/engine/core/session.py b/engine/core/session.py
+index 955f0a2..d6868e2 100644
+--- a/engine/core/session.py
++++ b/engine/core/session.py
+@@ -69,6 +69,10 @@ class Session:
+     # AudioReorder for multi-segment pipelining — set by Dispatcher
+     reorder: Any = None
+ 
++    # Optional external policies. The engine owns their lifecycle but does not
++    # import their implementation packages.
++    extension_commitment: Any = None
++
+     # Engine thread pushes EngineResult here; asyncio consumer reads them
+     result_queue: asyncio.Queue[EngineResult] = field(
+         default_factory=lambda: asyncio.Queue(maxsize=_SESSION_RESULT_QUEUE_MAXSIZE)
+diff --git a/engine/frontend/interface.py b/engine/frontend/interface.py
+index 53c4da3..7ad1557 100644
+--- a/engine/frontend/interface.py
++++ b/engine/frontend/interface.py
+@@ -30,6 +30,7 @@ from ..core.types import (
+ from ..core.lifecycle import LifecycleLogger
+ from ..core import observability as obs
+ from ..core.timing import ServerTimingAccumulator
++from ..core.extensions import EngineExtensions
+ from ..text_normalization import strip_emoji, split_pending_emoji
+ from ..interface.output import ENGINE_SAMPLE_RATE
+ from .dispatcher import Dispatcher
+@@ -84,6 +85,7 @@ class FrontendInterface:
+         l3_split_cap_ratio: float = 0.90,
+         guarded_delivery_default: bool = True,
+         guarded_delivery_window_ms: int = 100,
++        extensions: Optional[EngineExtensions] = None,
+     ):
+         self._dispatcher = Dispatcher(engine_inbox)
+         self._tokenizer = tokenizer
+@@ -104,6 +106,7 @@ class FrontendInterface:
+         self._guarded_delivery_window_ms = min(
+             max(float(guarded_delivery_window_ms), 100.0), 10_000.0
+         )
++        self._extensions = extensions or EngineExtensions()
+ 
+         self._sessions: Dict[str, Session] = {}
+         self._consumer_tasks: Dict[str, asyncio.Task] = {}
+@@ -154,6 +157,10 @@ class FrontendInterface:
+             l3_split_cap_ratio=self._l3_split_cap_ratio,
+         )
+         session.reorder = AudioReorder()
++        if self._extensions.commitment_factory is not None:
++            session.extension_commitment = self._extensions.commitment_factory(
++                session_id, config
++            )
+         session.event_callback = on_event
+         self._sessions[session_id] = session
+ 
+diff --git a/engine/server.py b/engine/server.py
+index 10cdce3..7e71d48 100644
+--- a/engine/server.py
++++ b/engine/server.py
+@@ -57,6 +57,7 @@ from .runtime.fingerprint import (
+     enforce_engine_fingerprint,
+ )
+ from .core.mlfq import MLFQConfig
++from .core.extensions import EngineExtensions
+ from .core import observability as obs
+ from .core.types import SessionConfig
+ from .interface import normalize_capabilities
+@@ -114,9 +115,11 @@ class TTSEngine:
+         max_batch_size: int = 48,
+         max_sessions: int = 128,
+         max_seq_len: int = 512,
++        extensions: Optional[EngineExtensions] = None,
+     ):
+         self._cfg = config or EngineConfig()
+         self._model_arch = model_arch or ModelArchConfig()
++        self._extensions = extensions or EngineExtensions()
+ 
+         self._loop: Optional[asyncio.AbstractEventLoop] = None
+ 
+@@ -303,6 +306,7 @@ class TTSEngine:
+             l3_split_cap_ratio=sc.l3_split_cap_ratio,
+             guarded_delivery_default=self._cfg.server.guarded_delivery_default,
+             guarded_delivery_window_ms=self._cfg.server.guarded_delivery_window_ms,
++            extensions=self._extensions,
+         )
+         prefill_builder = None
+         if self._weights_dir:
+@@ -395,6 +399,7 @@ class TTSEngine:
+             token_loop_max_retries=sched.token_loop_max_retries,
+             length_runaway_ratio=sched.length_runaway_ratio,
+             max_slots_per_session=self._cfg.spliter.max_concurrent_segments,
++            extensions=self._extensions,
+         )
+         self._engine_loop.start()
+ 

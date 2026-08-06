@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "x2streaming-tts"
+version = "0.1.0.dev0"
+description = "Causal commitment and speech-state inheritance extensions for Qwen3TTS-Streaming"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "XSquareRobot"}]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.optional-dependencies]
+torch = ["torch>=2.1"]
+tn = ["WeTextProcessing==1.2.0"]
+test = ["build>=1.2", "pytest>=8.0", "torch>=2.1"]
+dev = ["x2streaming-tts[test,tn]", "ruff>=0.6"]
+
+[project.urls]
+Repository = "https://github.com/X-Square-Robot/X2Streaming-TTS"
+Upstream = "https://github.com/X-Square-Robot/Qwen3TTS-Streaming"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/x2streaming_tts"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.git",
+  "/dist",
+  "/third_party",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "unit: pure method tests that do not require an engine service",
+  "integration: tests against the pinned Qwen3TTS-Streaming checkout",
+  "gpu: tests requiring CUDA/TensorRT",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+extend-exclude = ["third_party"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
