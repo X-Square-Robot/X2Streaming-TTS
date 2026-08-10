@@ -55,9 +55,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             get_wetext_chinese_normalizer,
         )
 
-        policy = X2StreamingPolicy(
-            text_normalizer=get_wetext_chinese_normalizer()
-        )
+        policy = X2StreamingPolicy(text_normalizer=get_wetext_chinese_normalizer())
         extensions = build_policy_factories(policy).to_upstream()
 
     cfg = EngineConfig()
@@ -152,10 +150,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         samples.frombytes(audio_data)
         pcm = array(
             "h",
-            (
-                round(max(-1.0, min(1.0, float(sample))) * 32767.0)
-                for sample in samples
-            ),
+            (round(max(-1.0, min(1.0, float(sample))) * 32767.0) for sample in samples),
         )
         output_wav = args.output_wav.resolve()
         output_wav.parent.mkdir(parents=True, exist_ok=True)

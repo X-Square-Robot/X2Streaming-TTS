@@ -3,6 +3,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .venv/
 build/
 dist/
@@ -14,4 +15,8 @@ coverage.xml
 *.wav
 *.flac
 workspace/
+.audio-review/
+.DS_Store
+.idea/
+.vscode/
 

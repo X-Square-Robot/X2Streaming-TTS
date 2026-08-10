@@ -66,6 +66,15 @@ def compute_thresholds(
 
 @dataclass(frozen=True)
 class CapacityConfig:
+    """Paper hyperparameters plus a standalone fallback cache budget.
+
+    ``decode_budget`` and ``prefill_len`` describe the usable cache only when no
+    engine has reported its own limit. Once an engine reports a budget through
+    ``AdaptiveCapacityEstimator.bind_engine_budget``, that value takes
+    precedence, matching the paper's "the cache limit is read from the loaded
+    engine".
+    """
+
     decode_budget: int = 384
     prefill_len: int = 12
     safety_margin: int = 8
@@ -116,15 +125,49 @@ class AdaptiveCapacityEstimator:
         config.validate()
         self.config = config
         self._ratio = float(config.ema_ratio_initial)
+        self._engine_remaining_kv: int | None = None
 
     @property
     def ratio(self) -> float:
         return self._ratio
 
     @property
+    def engine_remaining_kv(self) -> int | None:
+        """Post-prefill cache budget reported by the loaded engine, if any."""
+
+        return self._engine_remaining_kv
+
+    @property
+    def remaining_kv(self) -> int:
+        """Usable post-prefill budget: engine-reported when bound."""
+
+        if self._engine_remaining_kv is not None:
+            return self._engine_remaining_kv
+        return self.config.decode_budget - self.config.prefill_len
+
+    def bind_engine_budget(self, remaining_kv: int) -> None:
+        """Adopt the post-prefill cache budget reported by the loaded engine."""
+
+        if (
+            not isinstance(remaining_kv, int)
+            or isinstance(remaining_kv, bool)
+            or remaining_kv <= 0
+        ):
+            raise ValueError("remaining_kv must be a positive integer")
+        compute_thresholds(
+            remaining_kv,
+            self.config.ema_max_ratio,
+            safety_margin=self.config.safety_margin,
+            l1_cap_ratio=self.config.l1_split_cap_ratio,
+            l2_cap_ratio=self.config.l2_split_cap_ratio,
+            l3_cap_ratio=self.config.l3_split_cap_ratio,
+        )
+        self._engine_remaining_kv = remaining_kv
+
+    @property
     def thresholds(self) -> SplitThresholds:
         return compute_thresholds(
-            self.config.decode_budget - self.config.prefill_len,
+            self.remaining_kv,
             self._ratio,
             safety_margin=self.config.safety_margin,
             l1_cap_ratio=self.config.l1_split_cap_ratio,

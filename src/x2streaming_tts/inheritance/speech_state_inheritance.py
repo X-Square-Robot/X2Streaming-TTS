@@ -7,8 +7,9 @@ Talker-state path corresponding to Eqs. (prior) and (injection).
 
 The method carries the complete Code2Wav state plus the final four
 token-aligned Talker hidden states through a strict-causal text--acoustic
-bridge. Historical QK traces and direct Talker KV-cache carry are deliberately
-not part of this implementation.
+bridge. Historical QK-consensus attention traces and direct Talker KV-cache
+carry are deliberately not part of this implementation; the fixed causal
+attention prior of Eq. (prior) is.
 """
 
 from __future__ import annotations

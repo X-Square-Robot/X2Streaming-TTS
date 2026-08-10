@@ -11,8 +11,8 @@ commitment, continuity and audio-join policies. It wires ownership through
 and invalidates continuity state when a backend session is removed.
 
 It intentionally does not contain X2 algorithms. Subsequent patches will add
-the stable lifecycle calls needed to consume the policies. The same API is
-described in `docs/UPSTREAM_HOOK_PROPOSAL.md` for an upstream pull request.
+the stable lifecycle calls needed to consume the policies. The API is designed
+for submission as a generic upstream extension surface.
 
 Validation performed while generating this patch:
 
@@ -20,4 +20,3 @@ Validation performed while generating this patch:
 - Python compilation passed;
 - 72 targeted upstream frontend/engine/server unit tests passed with
   `PYTHONPATH=.:client/src`.
-

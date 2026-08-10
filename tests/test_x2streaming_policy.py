@@ -68,6 +68,32 @@ def test_commitment_exports_paper_splitter_configuration() -> None:
 
     config = commitment.splitter_config()
     thresholds = commitment.split_thresholds()
-    assert config["engine_max_decode_len"] == 384
     assert config["ema_ratio"] == 6.0
     assert thresholds.force_split_at == 60
+
+
+@pytest.mark.unit
+def test_splitter_config_never_overrides_the_engine_cache_limit() -> None:
+    commitment = X2StreamingPolicy(
+        text_normalizer=IdentityNormalizer()
+    ).new_causal_commitment()
+
+    config = commitment.splitter_config()
+
+    assert "engine_max_decode_len" not in config
+    assert "prefill_len" not in config
+
+
+@pytest.mark.unit
+def test_capacity_is_read_from_the_loaded_engine_when_reported() -> None:
+    commitment = X2StreamingPolicy(
+        text_normalizer=IdentityNormalizer()
+    ).new_causal_commitment()
+
+    fallback = commitment.split_thresholds()
+    engine_scoped = commitment.split_thresholds(500)
+
+    assert commitment.capacity.engine_remaining_kv == 500
+    assert engine_scoped.force_split_at > fallback.force_split_at
+    # The engine-reported budget persists for later segments of the session.
+    assert commitment.split_thresholds() == engine_scoped

@@ -850,7 +850,7 @@ index aa5b529..1f7f37b 100644
          l1_split_cap_ratio: float = 0.70,
          l2_split_cap_ratio: float = 0.80,
          l3_split_cap_ratio: float = 0.90,
-+        threshold_provider: Optional[Callable[[], Any]] = None,
++        threshold_provider: Optional[Callable[[int], Any]] = None,
      ) -> None:
          self._engine_max = engine_max_decode_len
          self._prefill_len = prefill_len
@@ -879,9 +879,10 @@ index aa5b529..1f7f37b 100644
      # ------------------------------------------------------------------
  
      def _make_thresholds(self) -> SplitThresholds:
+         remaining_kv = self._engine_max - self._prefill_len
 +        if self._threshold_provider is not None:
 +            try:
-+                external = self._threshold_provider()
++                external = self._threshold_provider(remaining_kv)
 +                return SplitThresholds(
 +                    min_tokens_l1=int(external.min_tokens_l1),
 +                    min_tokens_l2=int(external.min_tokens_l2),
@@ -892,7 +893,6 @@ index aa5b529..1f7f37b 100644
 +                logger.exception(
 +                    "External threshold provider failed; using upstream thresholds"
 +                )
-         remaining_kv = self._engine_max - self._prefill_len
          return compute_thresholds(
              remaining_kv,
 @@ -543,7 +565,14 @@ class Spliter:
@@ -969,7 +969,7 @@ new file mode 100644
 index 0000000..0c35c85
 --- /dev/null
 +++ b/tests/unit/engine_core/test_extension_lifecycle.py
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,97 @@
 +import torch
 +
 +from engine.backend.kv_cache_pool import KVCachePool, ModelConfig
@@ -997,13 +997,25 @@ index 0000000..0c35c85
 +
 +def test_external_threshold_and_boundary_open_successor_segment() -> None:
 +    thresholds = SplitThresholds(50, 50, 50, 60)
-+    spliter = Spliter(threshold_provider=lambda: thresholds, max_concurrent=2)
++    seen: list[int] = []
++
++    def provider(remaining_kv: int) -> SplitThresholds:
++        seen.append(remaining_kv)
++        return thresholds
++
++    spliter = Spliter(
++        threshold_provider=provider,
++        max_concurrent=2,
++        engine_max_decode_len=512,
++        prefill_len=12,
++    )
 +
 +    first = spliter.feed_tokens([SegmentToken(1, "温")])
 +    boundary = spliter.feed_tokens(
 +        [SegmentToken(2, "度", boundary_before="numeric_suffix")]
 +    )
 +    assert spliter.current_thresholds == thresholds
++    assert seen and set(seen) == {500}
 +    assert any(item.action.type == ActionType.FLUSH_EOS for item in boundary)
 +    assert any(
 +        item.segment_idx == 1 and item.action.type == ActionType.PREFILL

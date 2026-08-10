@@ -62,6 +62,8 @@ def test_real_frontend_consumes_only_committed_spans_and_opens_boundary() -> Non
             CharTokenizer(),
             extensions=extensions,
             max_concurrent_segments=2,
+            engine_max_decode_len=512,
+            prefill_len=12,
         )
         session = await frontend.create_session(
             "x2-lifecycle",
@@ -78,7 +80,13 @@ def test_real_frontend_consumes_only_committed_spans_and_opens_boundary() -> Non
             ord("温"),
             ord("度"),
         ]
-        assert session.spliter.current_thresholds.force_split_at == 60
+        # Capacity is derived from the cache limit the engine reports
+        # (512 - 12 prefill - 8 margin, over the initial ratio 6.0), not from
+        # the standalone fallback budget in CapacityConfig.
+        commitment = session.extension_commitment
+        assert commitment.capacity.engine_remaining_kv == 500
+        assert session.spliter.current_thresholds.force_split_at == 82
+        assert commitment.capacity.config.decode_budget == 384
 
         await frontend.push_text_input("x2-lifecycle", "℃。")
         second = await _drain(inbox)

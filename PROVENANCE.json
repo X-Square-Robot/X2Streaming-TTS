@@ -1,9 +1,6 @@
 {
   "schema": "x2streaming_source_provenance_v1",
   "extracted_at": "2026-08-06",
-  "source_repository": "X2Streaming-TTS-review (local extraction source)",
-  "source_head": "cac16b9",
-  "source_worktree_had_uncommitted_changes": true,
   "upstream_comparison_baseline": "0f3d91dd6a3794d51928452ca3eeb1d0c876fd38",
   "upstream_release_baseline": "0745e4a8613f0780cc57475452ee775a9abac2dd",
   "files": [

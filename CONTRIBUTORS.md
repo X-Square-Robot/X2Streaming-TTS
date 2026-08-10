@@ -1,7 +1,8 @@
 # Contributors
 
-Copyright is held by XSquareRobot. Individual contributors are preserved in
-Git history and acknowledged by the project release metadata.
+Copyright is held by XSquareRobot. The initial public release was imported as a
+single commit, so per-author history begins with the first release; subsequent
+individual contributions are attributed through this repository's Git history.
 
 Earlier Base/ICL default-reference work already merged into the upstream
 Qwen3TTS-Streaming repository remains attributed through its original commits

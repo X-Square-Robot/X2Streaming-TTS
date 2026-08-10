@@ -44,12 +44,14 @@ class CausalCommitment:
         return self.controller.feed(punct_level=punct_level)
 
     def splitter_config(self) -> dict[str, int | float]:
-        """Return the paper configuration consumed by an engine splitter."""
+        """Return the paper hyperparameters consumed by an engine splitter.
+
+        The cache limit is deliberately absent: the engine reports its own
+        usable budget, and this policy adopts it through ``split_thresholds``.
+        """
 
         config = self.capacity.config
         return {
-            "engine_max_decode_len": config.decode_budget,
-            "prefill_len": config.prefill_len,
             "ema_ratio": self.capacity.ratio,
             "safety_margin": config.safety_margin,
             "ema_alpha": config.ema_alpha,
@@ -61,9 +63,21 @@ class CausalCommitment:
             "l3_split_cap_ratio": config.l3_split_cap_ratio,
         }
 
-    def split_thresholds(self):
-        """Return the current delayed-feedback commitment thresholds."""
+    def bind_engine_budget(self, remaining_kv: int) -> None:
+        """Adopt the post-prefill cache budget reported by the loaded engine."""
 
+        self.capacity.bind_engine_budget(remaining_kv)
+
+    def split_thresholds(self, remaining_kv: int | None = None):
+        """Return the current delayed-feedback commitment thresholds.
+
+        An engine passes its post-prefill cache budget so that capacity is
+        derived from the loaded engine rather than from a configured default.
+        Standalone callers may omit it and fall back to ``CapacityConfig``.
+        """
+
+        if remaining_kv is not None:
+            self.capacity.bind_engine_budget(int(remaining_kv))
         return self.capacity.thresholds
 
     def observe_segment(

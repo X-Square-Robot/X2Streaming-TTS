@@ -121,6 +121,32 @@ def test_capacity_config_rejects_invalid_values() -> None:
 
 
 @pytest.mark.unit
+def test_engine_reported_budget_takes_precedence_over_config_default() -> None:
+    estimator = AdaptiveCapacityEstimator(CapacityConfig())
+
+    assert estimator.engine_remaining_kv is None
+    assert estimator.remaining_kv == 384 - 12
+    configured_cap = estimator.thresholds.force_split_at
+
+    estimator.bind_engine_budget(1000)
+
+    assert estimator.engine_remaining_kv == 1000
+    assert estimator.remaining_kv == 1000
+    assert estimator.thresholds.force_split_at > configured_cap
+
+
+@pytest.mark.unit
+def test_engine_budget_must_be_a_usable_positive_size() -> None:
+    estimator = AdaptiveCapacityEstimator(CapacityConfig())
+
+    with pytest.raises(ValueError, match="positive integer"):
+        estimator.bind_engine_budget(0)
+    with pytest.raises(ValueError, match="too small"):
+        estimator.bind_engine_budget(20)
+    assert estimator.engine_remaining_kv is None
+
+
+@pytest.mark.unit
 def test_decision_is_independent_of_unseen_future_tokens() -> None:
     config = CapacityConfig()
     left = CausalCommitmentController(AdaptiveCapacityEstimator(config))

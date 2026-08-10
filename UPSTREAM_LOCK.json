@@ -4,6 +4,6 @@
   "tag": null,
   "submodule_path": "third_party/Qwen3TTS-Streaming",
   "integration": "submodule-plus-minimal-hook-patches",
-  "patch_series_sha256": "62eeb5872774597b725269b9a0481e69e09e5e07eaa2c653a86129417ee9abe0",
+  "patch_series_sha256": "9df9d6ef6f8b94c6ca25b9b3e4a3035fc9d6514858220cbd494921f5dee35af6",
   "verified_at": "2026-08-06"
 }

@@ -1,9 +1,56 @@
 cff-version: 1.2.0
-message: "If you use X2Streaming-TTS, cite the accompanying paper and the upstream Qwen3TTS-Streaming software."
+message: "If you use X2Streaming-TTS, cite the paper below and the upstream Qwen3TTS-Streaming software."
 title: "X2Streaming-TTS"
 type: software
 version: 0.1.0.dev0
 date-released: 2026-08-06
 license: MIT
 repository-code: "https://github.com/X-Square-Robot/X2Streaming-TTS"
-
+authors:
+  - given-names: Bin
+    family-names: Wen
+    affiliation: "X Square Robot"
+  - given-names: Zehan
+    family-names: Liu
+    affiliation: "X Square Robot"
+  - given-names: Xiaoyi
+    family-names: Qin
+    affiliation: "X Square Robot"
+  - given-names: Yanpei
+    family-names: Shi
+    affiliation: "X Square Robot"
+  - given-names: Ruyi
+    family-names: Gan
+    affiliation: "X Square Robot"
+  - given-names: Hao
+    family-names: Wang
+    affiliation: "X Square Robot"
+  - given-names: Qian
+    family-names: Wang
+    affiliation: "X Square Robot"
+preferred-citation:
+  type: article
+  title: "X2Streaming-TTS: Causal Token-Level Text-to-Speech from Streaming Text with Speech-State Inheritance"
+  year: 2026
+  authors:
+    - given-names: Bin
+      family-names: Wen
+      affiliation: "X Square Robot"
+    - given-names: Zehan
+      family-names: Liu
+      affiliation: "X Square Robot"
+    - given-names: Xiaoyi
+      family-names: Qin
+      affiliation: "X Square Robot"
+    - given-names: Yanpei
+      family-names: Shi
+      affiliation: "X Square Robot"
+    - given-names: Ruyi
+      family-names: Gan
+      affiliation: "X Square Robot"
+    - given-names: Hao
+      family-names: Wang
+      affiliation: "X Square Robot"
+    - given-names: Qian
+      family-names: Wang
+      affiliation: "X Square Robot"
