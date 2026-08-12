@@ -66,13 +66,12 @@ def compute_thresholds(
 
 @dataclass(frozen=True)
 class CapacityConfig:
-    """Paper hyperparameters plus a standalone fallback cache budget.
+    """Capacity hyperparameters plus a standalone fallback cache budget.
 
     ``decode_budget`` and ``prefill_len`` describe the usable cache only when no
     engine has reported its own limit. Once an engine reports a budget through
     ``AdaptiveCapacityEstimator.bind_engine_budget``, that value takes
-    precedence, matching the paper's "the cache limit is read from the loaded
-    engine".
+    precedence over the configured fallback.
     """
 
     decode_budget: int = 384
