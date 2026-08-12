@@ -1,4 +1,4 @@
-"""Public configuration for the paper-defined X2Streaming-TTS method."""
+"""Public configuration for the X2Streaming-TTS method."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from .commitment.capacity import CapacityConfig
 
 @dataclass(frozen=True)
 class SpeechStateInheritanceConfig:
-    """The single inheritance configuration reported in the paper."""
+    """The single inheritance configuration for the method."""
 
     enabled: bool = True
     max_ctx_frames: int = 160

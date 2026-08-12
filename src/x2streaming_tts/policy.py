@@ -8,7 +8,7 @@ from .config import X2StreamingConfig
 
 
 class X2StreamingPolicy:
-    """Construct the two mechanisms described by the X2Streaming-TTS paper."""
+    """Construct the two mechanisms of the X2Streaming-TTS method."""
 
     def __init__(
         self,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Long-running bounded-state stress test for the unified paper method."""
+"""Long-running bounded-state stress test for the unified method."""
 
 from __future__ import annotations
 
@@ -33,14 +33,13 @@ def stress_device(device: torch.device, segments: int = 2000) -> dict:
     started = time.perf_counter()
 
     for segment_idx in range(segments):
-        hidden_tail = [
-            (
+        for position in range(4):
+            inheritance.observe_hidden(
+                segment_idx,
                 position,
                 torch.randn(1, 256, device=device, generator=generator),
             )
-            for position in range(4)
-        ]
-        slot = SimpleNamespace(
+        state = SimpleNamespace(
             c2w_kv=torch.randn(2, 8, 128, 64, device=device, generator=generator),
             c2w_conv_states=[
                 torch.randn(1, 64, 32, device=device, generator=generator)
@@ -49,14 +48,13 @@ def stress_device(device: torch.device, segments: int = 2000) -> dict:
                 torch.randn(1, 64, 32, device=device, generator=generator)
             ],
             frame_idx=segment_idx * 6,
-            text_acoustic_hidden_tail=hidden_tail,
         )
         if not inheritance.finalize_segment(
             segment_idx,
             [1, 2, 3, 4],
             eos_reason="codec_eos",
             audio_steps=24,
-            slot=slot,
+            state=state,
             consumed_text_tokens=4,
         ):
             raise RuntimeError(f"healthy segment {segment_idx} broke the chain")

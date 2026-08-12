@@ -1,15 +1,14 @@
 """Causal speech-state inheritance for X2Streaming-TTS.
 
-Paper mapping: this module implements ``Causal Speech-State Inheritance`` and
-Fig. 2 of the paper.  ``finalize_segment`` is the health gate, Code2Wav fields
-are the waveform-state path, and ``build_text_acoustic_bridge`` is the bounded
-Talker-state path corresponding to Eqs. (prior) and (injection).
+``finalize_segment`` is the health gate. Code2Wav fields form the
+waveform-state path, and ``build_text_acoustic_bridge`` carries a bounded
+Talker-state path across segment boundaries.
 
 The method carries the complete Code2Wav state plus the final four
 token-aligned Talker hidden states through a strict-causal text--acoustic
 bridge. Historical QK-consensus attention traces and direct Talker KV-cache
-carry are deliberately not part of this implementation; the fixed causal
-attention prior of Eq. (prior) is.
+carry are deliberately not part of this implementation; a fixed causal
+attention prior is.
 """
 
 from __future__ import annotations
@@ -98,18 +97,16 @@ def build_text_acoustic_bridge(
 ) -> Optional[TextAcousticBridgeOutput]:
     """Attend from a Talker acoustic state to arrived text embeddings.
 
-    Paper mapping
-    -------------
-    ``content_logits + position_logits`` and the strict future mask implement
-    Eq. (prior).  The returned context and bounded ``gate`` are consumed by
-    ``EngineLoop._apply_text_acoustic_bridge`` to implement Eq. (injection).
-    Future positions receive no finite logit.
+    ``content_logits + position_logits`` plus a strict future mask form the
+    causal attention prior. The returned context and bounded ``gate`` are
+    consumed by ``EngineLoop._apply_text_acoustic_bridge`` as a residual
+    injection. Future positions receive no finite logit.
 
-    This is the inference-only identity-projection version of the proposed
-    bridge.  Learned ``Wq/Wk/Wv/Wb`` matrices would be meaningless without
-    training, so the existing hidden/embedding space is reused.  A Gaussian
-    prior advances monotonically by ``delta`` and a confidence gate limits
-    the residual to at most ``strength``.  All state remains on device so the
+    This is the inference-only identity-projection version of the bridge.
+    Learned ``Wq/Wk/Wv/Wb`` matrices would be meaningless without training,
+    so the existing hidden/embedding space is reused. A Gaussian prior
+    advances monotonically by ``delta`` and a confidence gate limits the
+    residual to at most ``strength``. All state remains on device so the
     decode loop does not synchronize CUDA once per frame.
     """
 
@@ -212,7 +209,7 @@ def build_text_acoustic_bridge(
 
 @dataclass
 class SegmentSnapshot:
-    """The two paper-defined state paths of one healthy predecessor."""
+    """The two state paths of one healthy predecessor."""
 
     segment_idx: int
     text_token_ids: list[int]
@@ -259,7 +256,7 @@ class ContinuationContext:
 
 
 class CausalSpeechStateInheritance:
-    """Paper-defined per-session inheritance state machine."""
+    """Per-session inheritance state machine."""
 
     def __init__(self, config: SpeechStateInheritanceConfig):
         self.config = config
@@ -284,10 +281,10 @@ class CausalSpeechStateInheritance:
     ) -> bool:
         """Fold the finished segment into continuity state.
 
-        This is the health check at the left of Fig. 2.  Only a clean,
-        completely consumed, codec-EOS-terminated predecessor with an
-        in-range acoustic:text ratio can publish either state path.  Failure
-        clears the chain so the successor starts from the baseline state.
+        Only a clean, completely consumed, codec-EOS-terminated predecessor
+        with an in-range acoustic:text ratio can publish either state path.
+        Failure clears the chain so the successor starts from the baseline
+        state.
 
         Returns True when the segment passed the health gate and became
         context; False when the chain was broken (next segment starts fresh).
@@ -328,9 +325,8 @@ class CausalSpeechStateInheritance:
             )
         if self.config.carry_c2w:
             if state is None or not self._snapshot_c2w(snap, state):
-                # Both paper-defined state paths are one atomic method. Never
-                # publish the acoustic hidden tail with an incomplete
-                # Code2Wav bundle.
+                # Both state paths are one atomic method. Never publish the
+                # acoustic hidden tail with an incomplete Code2Wav bundle.
                 self._snapshots.clear()
                 CONTINUITY_STATS.on_chain_broken("c2w_snapshot_failed")
                 logger.warning(

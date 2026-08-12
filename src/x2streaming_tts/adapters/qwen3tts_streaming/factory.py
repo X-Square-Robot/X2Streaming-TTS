@@ -17,7 +17,7 @@ from ...policy import X2StreamingPolicy
 
 @dataclass(frozen=True)
 class PolicyFactoryBundle:
-    """Engine-independent representation of the two paper mechanisms."""
+    """Engine-independent representation of the two method mechanisms."""
 
     commitment_factory: Callable[[str, Any], Any]
     continuity_factory: Callable[[str, Any], Any]

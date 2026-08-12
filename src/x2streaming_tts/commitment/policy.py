@@ -1,4 +1,4 @@
-"""Unified causal-commitment mechanism from the X2Streaming-TTS paper."""
+"""Unified causal-commitment mechanism for X2Streaming-TTS."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class CausalCommitment:
         return self.controller.feed(punct_level=punct_level)
 
     def splitter_config(self) -> dict[str, int | float]:
-        """Return the paper hyperparameters consumed by an engine splitter.
+        """Return the capacity hyperparameters consumed by an engine splitter.
 
         The cache limit is deliberately absent: the engine reports its own
         usable budget, and this policy adopts it through ``split_thresholds``.
