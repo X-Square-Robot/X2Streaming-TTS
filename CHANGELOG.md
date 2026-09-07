@@ -10,6 +10,10 @@ All notable changes to X2Streaming-TTS are documented here. The format follows
 
 ### Added
 
+- Links to the released weights on Hugging Face:
+  `x-square-robot/X2Streaming-TTS-1.7B` (deployed CustomVoice checkpoint) and
+  `x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz` (progress observer head), with a
+  Models table, badges and a download step in the README.
 - README rebuilt around the paper: problem statement, the two mechanisms with the
   paper's figures, headline results, demo recordings, related projects and citation.
 - X2-NativeCursor feature page (`docs/native_cursor.md`) describing the native-token
