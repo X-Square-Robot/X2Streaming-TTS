@@ -6,20 +6,32 @@ version: 0.1.0.dev0
 date-released: 2026-08-06
 license: MIT
 repository-code: "https://github.com/X-Square-Robot/X2Streaming-TTS"
+url: "https://github.com/X-Square-Robot/X2Streaming-TTS"
+abstract: >-
+  Reference implementation of causal commitment and causal speech-state
+  inheritance for token-level streaming text-to-speech, packaged as a
+  code-only extension of the Qwen3TTS-Streaming engine.
+keywords:
+  - text-to-speech
+  - streaming
+  - token-level
+  - causal
+  - Qwen3-TTS
+  - TensorRT
 authors:
-  - given-names: Bin
+  - given-names: Rime
     family-names: Wen
     affiliation: "X Square Robot"
   - given-names: Zehan
     family-names: Liu
     affiliation: "X Square Robot"
-  - given-names: Xiaoyi
+  - given-names: Shawn
     family-names: Qin
     affiliation: "X Square Robot"
-  - given-names: Yanpei
+  - given-names: Lights
     family-names: Shi
     affiliation: "X Square Robot"
-  - given-names: Ruyi
+  - given-names: Roy
     family-names: Gan
     affiliation: "X Square Robot"
   - given-names: Hao
@@ -31,21 +43,28 @@ authors:
 preferred-citation:
   type: article
   title: "X2Streaming-TTS: Causal Token-Level Text-to-Speech from Streaming Text with Speech-State Inheritance"
+  journal: "arXiv preprint arXiv:2608.18661"
   year: 2026
+  month: 8
+  url: "https://arxiv.org/abs/2608.18661"
+  identifiers:
+    - type: other
+      value: "arXiv:2608.18661"
+      description: "arXiv preprint identifier"
   authors:
-    - given-names: Bin
+    - given-names: Rime
       family-names: Wen
       affiliation: "X Square Robot"
     - given-names: Zehan
       family-names: Liu
       affiliation: "X Square Robot"
-    - given-names: Xiaoyi
+    - given-names: Shawn
       family-names: Qin
       affiliation: "X Square Robot"
-    - given-names: Yanpei
+    - given-names: Lights
       family-names: Shi
       affiliation: "X Square Robot"
-    - given-names: Ruyi
+    - given-names: Roy
       family-names: Gan
       affiliation: "X Square Robot"
     - given-names: Hao
@@ -54,3 +73,16 @@ preferred-citation:
     - given-names: Qian
       family-names: Wang
       affiliation: "X Square Robot"
+references:
+  - type: software
+    title: "Qwen3TTS-Streaming"
+    repository-code: "https://github.com/X-Square-Robot/Qwen3TTS-Streaming"
+    authors:
+      - name: "XSquareRobot"
+    license: MIT
+  - type: software
+    title: "X2-Turn"
+    repository-code: "https://github.com/X-Square-Robot/X2-Turn"
+    authors:
+      - name: "XSquareRobot"
+    license: Apache-2.0

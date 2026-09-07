@@ -25,3 +25,7 @@ wiring and type conversion. Method algorithms must remain under
 This repository distributes code only. It does not distribute papers,
 datasets, experiment results, model weights, generated audio, listener data,
 TensorRT plans or ONNX artifacts.
+
+The files under `docs/assets/` are documentation media: figures reproduced
+from the paper and screen recordings of the upstream demo pages. They
+illustrate the README and are not research artifacts or evaluation material.

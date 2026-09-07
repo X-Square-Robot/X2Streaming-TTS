@@ -8,6 +8,7 @@ version = "0.1.0.dev0"
 description = "Causal commitment and speech-state inheritance extensions for Qwen3TTS-Streaming"
 readme = "README.md"
 requires-python = ">=3.10"
+keywords = ["text-to-speech", "streaming", "token-level", "causal", "qwen3-tts", "tensorrt"]
 license = {text = "MIT"}
 authors = [{name = "XSquareRobot"}]
 classifiers = [
@@ -30,7 +31,10 @@ dev = ["x2streaming-tts[test,tn]", "ruff>=0.6"]
 
 [project.urls]
 Repository = "https://github.com/X-Square-Robot/X2Streaming-TTS"
+Paper = "https://arxiv.org/abs/2608.18661"
+Changelog = "https://github.com/X-Square-Robot/X2Streaming-TTS/blob/main/CHANGELOG.md"
 Upstream = "https://github.com/X-Square-Robot/Qwen3TTS-Streaming"
+"X2-Turn" = "https://github.com/X-Square-Robot/X2-Turn"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/x2streaming_tts"]
