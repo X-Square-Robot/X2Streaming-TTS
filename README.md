@@ -2,7 +2,7 @@
   <h1>
     <img
       src="docs/assets/x-square-logo.png"
-      alt="X Square mascot"
+      alt="X Square beaver mascot holding the moon"
       width="72"
       align="center"
     >

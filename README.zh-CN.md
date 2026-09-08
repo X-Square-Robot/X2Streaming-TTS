@@ -2,7 +2,7 @@
   <h1>
     <img
       src="docs/assets/x-square-logo.png"
-      alt="X Square mascot"
+      alt="X Square 河狸双手举月亮吉祥物"
       width="72"
       align="center"
     >
