@@ -221,6 +221,11 @@ timing and dialogue history all need that position, and a fixed audio-frames-per
 ratio only approximates it. Running a waveform aligner recovers it, at the cost of a
 second acoustic model per stream.
 
+<div align="center">
+  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2-NativeCursor use cases: text-speech progress mismatch, synchronized highlighting, an interruption boundary, and a dialogue-history update that retains only spoken text">
+  <p><em>Application scenarios for reading progress. (a) Available text alone does not reveal how far speech has progressed. (b) A cursor derived from native speech tokens can drive synchronized highlighting. (c) Combined with the playback clock, it can separate played from unplayed text at interruption. (d) Dialogue history can then retain the prefix the user actually heard.</em></p>
+</div>
+
 X2-NativeCursor answers the question **before waveform decoding**. Every 80 ms the
 Talker emits one codebook-0 token; a lightweight observer reads it, scores it against
 the spoken labels of the text visible so far and advances a continuous position. The
