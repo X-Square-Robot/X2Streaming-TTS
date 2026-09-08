@@ -26,6 +26,11 @@
 
 [English](README.md) | **简体中文**
 
+<div align="center">
+  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2-NativeCursor 应用示意：文本与语音进度不匹配、同步高亮、打断边界，以及只记录已说内容的对话历史更新">
+  <p><em>朗读进度的应用示意。(a) 仅知道已到达的文本，无法确定语音说到了哪里；(b) 原生语音 token 提供的游标可用于同步高亮；(c) 结合播放时钟，可在打断时区分已播放与未播放的文本；(d) 对话历史据此保留用户实际听到的前缀。</em></p>
+</div>
+
 X2Streaming-TTS 是论文 [*X2Streaming-TTS: Causal Token-Level Text-to-Speech from
 Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 的参考实现。论文提出两个机制：**因果承诺（causal commitment）** 决定哪些文本可以开始读、
@@ -206,11 +211,6 @@ token 级流式一旦跑通，第二个问题立刻出现：**刚收到的这段
 随读高亮、用户打断时结算听到了多少、字幕时间轴、对话历史，都需要这个位置。"每个字
 固定多少帧音频"只是粗略估算；跑一个语音对齐模型可以拿到准确位置，但每一路都要多付
 一个声学模型的开销。
-
-<div align="center">
-  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2-NativeCursor 应用示意：文本与语音进度不匹配、同步高亮、打断边界，以及只记录已说内容的对话历史更新">
-  <p><em>朗读进度的应用示意。(a) 仅知道已到达的文本，无法确定语音说到了哪里；(b) 原生语音 token 提供的游标可用于同步高亮；(c) 结合播放时钟，可在打断时区分已播放与未播放的文本；(d) 对话历史据此保留用户实际听到的前缀。</em></p>
-</div>
 
 X2-NativeCursor 在**波形解码之前**就给出答案。Talker 每 80 ms 输出一个 codebook-0
 token；一个轻量的观察器读取它，和目前已到达文本的读音逐个比对，估计现在读到了哪里。
