@@ -27,8 +27,8 @@
 [English](README.md) | **简体中文**
 
 <div align="center">
-  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2-NativeCursor 应用示意：文本与语音进度不匹配、同步高亮、打断边界，以及只记录已说内容的对话历史更新">
-  <p><em>朗读进度的应用示意。(a) 仅知道已到达的文本，无法确定语音说到了哪里；(b) 原生语音 token 提供的游标可用于同步高亮；(c) 结合播放时钟，可在打断时区分已播放与未播放的文本；(d) 对话历史据此保留用户实际听到的前缀。</em></p>
+  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2Streaming-TTS 与 X2-NativeCursor 应用场景：边接收文本边发声、连续朗读、同步高亮、基于播放进度的打断处理，以及保留已播放内容的对话历史">
+  <p><em>X2Streaming-TTS 与 X2-NativeCursor 的应用示意：文本逐步到达时开始发声，跨片段维持语音连续，按朗读进度同步高亮，结合播放时钟处理打断，并以已播放内容更新对话历史。</em></p>
 </div>
 
 X2Streaming-TTS 是论文 [*X2Streaming-TTS: Causal Token-Level Text-to-Speech from

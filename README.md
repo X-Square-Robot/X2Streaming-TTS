@@ -27,8 +27,8 @@
 **English** | [简体中文](README.zh-CN.md)
 
 <div align="center">
-  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2-NativeCursor use cases: text-speech progress mismatch, synchronized highlighting, an interruption boundary, and a dialogue-history update that retains only spoken text">
-  <p><em>Application scenarios for reading progress. (a) Available text alone does not reveal how far speech has progressed. (b) A cursor derived from native speech tokens can drive synchronized highlighting. (c) Combined with the playback clock, it can separate played from unplayed text at interruption. (d) Dialogue history can then retain the prefix the user actually heard.</em></p>
+  <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2Streaming-TTS and X2-NativeCursor scenarios: speaking as text arrives, continuous narration, synchronized highlighting, playback-aware interruption, and dialogue history that retains played content">
+  <p><em>Illustrative scenarios for X2Streaming-TTS and X2-NativeCursor: start speaking as text arrives, maintain voice continuity across segments, synchronize text highlighting, use the playback clock to account for interruptions, and retain played content in dialogue history.</em></p>
 </div>
 
 X2Streaming-TTS is the reference implementation of
