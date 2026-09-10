@@ -3,7 +3,7 @@
 # X2-NativeCursor：从原生 token 读出朗读进度
 
 > 状态：已作为参考集成随上游 Qwen3TTS-Streaming 引擎（`dev` 分支）发布；发布的观察器头在
-> [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)。
+> [`zehan1/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz)。
 > 论文评审中。本仓库的 hook 补丁对应上游引擎提交 `0745e4a8`，早于观察器的加入。
 
 ## 问题
@@ -97,7 +97,7 @@ MAE 为 0.206，排序不变。在 CosyVoice2 的 token 上重训观察器，同
 下载观察器头，放到引擎的 `resources/native_cursor/` 下：
 
 ```bash
-huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
+huggingface-cli download zehan1/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
 cp ./weights/X2-NativeCursor-Qwen3TTS-12Hz/qwen3_tts_12hz_la1_seed0.pt \
    <Qwen3TTS-Streaming>/resources/native_cursor/

@@ -10,8 +10,8 @@ X2Streaming-TTS 的所有重要变更都记录在此。格式遵循
 
 ### 新增
 
-- Hugging Face 权重链接：`x-square-robot/X2Streaming-TTS-1.7B`（部署版 CustomVoice
-  checkpoint）与 `x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`（进度观察器头），README
+- Hugging Face 权重链接：`zehan1/X2Streaming-TTS-1.7B`（部署版 CustomVoice
+  checkpoint）与 `zehan1/X2-NativeCursor-Qwen3TTS-12Hz`（进度观察器头），README
   新增模型表、徽章与下载步骤。
 - README 围绕论文重建：问题陈述、两大机制及论文插图、核心结果、demo 录屏、相关项目与引用。
 - X2-NativeCursor 功能页（`docs/native_cursor.zh-CN.md`），介绍随上游 `dev` 分支发布的
