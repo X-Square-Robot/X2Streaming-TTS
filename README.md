@@ -98,6 +98,7 @@ Each model card lists the files, SHA-256 checksums, usage and scope.
 - [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
+- [Star History](#star-history)
 
 ## Why token-level streaming is hard
 
@@ -514,3 +515,7 @@ XSquareRobot. The released model weights are Apache-2.0; the pinned upstream eng
 MIT; Qwen3-TTS is Apache 2.0; NVIDIA runtime images and the optional TEN VAD dependency
 keep their own terms. See
 [THIRD_PARTY.md](THIRD_PARTY.md) and [NOTICE](NOTICE).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=X-Square-Robot/X2Streaming-TTS&type=date&legend=top-left)](https://www.star-history.com/?repos=X-Square-Robot%2FX2Streaming-TTS&type=date&legend=top-left)

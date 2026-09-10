@@ -94,6 +94,7 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 - [引用](#引用)
 - [致谢](#致谢)
 - [许可](#许可)
+- [Star History](#star-history)
 
 ## token 级流式为什么难
 
@@ -484,3 +485,7 @@ X2Streaming-TTS 代码以 [MIT 许可](LICENSE)发布，Copyright (c) 2026 XSqua
 发布的模型权重为 Apache-2.0；固定版本的上游引擎为 MIT；Qwen3-TTS 为 Apache 2.0；
 NVIDIA 运行时镜像与可选的 TEN VAD 依赖各自保留其条款。见 [THIRD_PARTY.md](THIRD_PARTY.md)
 与 [NOTICE](NOTICE)。
+
+## Star History
+
+[![GitHub Star 增长趋势](https://api.star-history.com/chart?repos=X-Square-Robot/X2Streaming-TTS&type=date&legend=top-left)](https://www.star-history.com/?repos=X-Square-Robot%2FX2Streaming-TTS&type=date&legend=top-left)
