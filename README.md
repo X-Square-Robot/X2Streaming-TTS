@@ -15,8 +15,8 @@
   <p>
     <a href="https://arxiv.org/abs/2608.18661"><img src="https://img.shields.io/badge/arXiv-2608.18661-b31b1b" alt="X2Streaming-TTS paper"></a>
     <a href="https://arxiv.org/abs/2609.09677"><img src="https://img.shields.io/badge/arXiv-2609.09677-b31b1b" alt="X2-NativeCursor paper"></a>
-    <a href="https://huggingface.co/zehan1/X2Streaming-TTS-1.7B"><img src="https://img.shields.io/badge/Hugging%20Face-X2Streaming--TTS--1.7B-yellow" alt="X2Streaming-TTS-1.7B weights"></a>
-    <a href="https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz"><img src="https://img.shields.io/badge/Hugging%20Face-X2--NativeCursor-yellow" alt="X2-NativeCursor weights"></a>
+    <a href="https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B"><img src="https://img.shields.io/badge/Hugging%20Face-X2Streaming--TTS--1.7B-yellow" alt="X2Streaming-TTS-1.7B weights"></a>
+    <a href="https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz"><img src="https://img.shields.io/badge/Hugging%20Face-X2--NativeCursor-yellow" alt="X2-NativeCursor weights"></a>
     <a href="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml"><img src="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python 3.10+">
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
@@ -61,9 +61,9 @@ submodule at commit `0745e4a8`.
   [X2-NativeCursor](#x2-nativecursor-reading-progress-from-native-tokens) below and the
   [feature page](docs/native_cursor.md).
 - **[2026-09-07] Weights released.** The deployed checkpoint
-  [`zehan1/X2Streaming-TTS-1.7B`](https://huggingface.co/zehan1/X2Streaming-TTS-1.7B)
+  [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B)
   and the X2-NativeCursor observer head
-  [`zehan1/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz)
+  [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)
   are on Hugging Face under Apache-2.0. See [Models](#models).
 - **[2026-08-19]** The paper is on arXiv: [2608.18661](https://arxiv.org/abs/2608.18661).
 - **[2026-08-06]** First public release of the method code, against Qwen3TTS-Streaming
@@ -78,8 +78,8 @@ submodule at commit `0745e4a8`.
 
 | Repository | Contents | Size | License |
 | --- | --- | --: | --- |
-| [`zehan1/X2Streaming-TTS-1.7B`](https://huggingface.co/zehan1/X2Streaming-TTS-1.7B) | CustomVoice model fine-tuned from Qwen3-TTS-12Hz-1.7B-Base, speaker `robot_service_v1`, Hugging Face format (safetensors + 12 Hz speech tokenizer); the upstream engine exports it to TensorRT as the `custom-1.7b` variant | 4.3 GB | Apache-2.0 |
-| [`zehan1/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz) | Reading-progress observer head, 2.0M parameters, reads the codebook-0 tokens of the model above; drop it into the engine's `resources/native_cursor/` to enable | 8.2 MB | Apache-2.0 |
+| [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B) | CustomVoice model fine-tuned from Qwen3-TTS-12Hz-1.7B-Base, speaker `robot_service_v1`, Hugging Face format (safetensors + 12 Hz speech tokenizer); the upstream engine exports it to TensorRT as the `custom-1.7b` variant | 4.3 GB | Apache-2.0 |
+| [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz) | Reading-progress observer head, 2.0M parameters, reads the codebook-0 tokens of the model above; drop it into the engine's `resources/native_cursor/` to enable | 8.2 MB | Apache-2.0 |
 
 Each model card lists the files, SHA-256 checksums, usage and scope.
 
@@ -255,7 +255,7 @@ order (`99%` → 百分之九十九). The generator, tokenizer and vocoder are u
 
 The observer retrains for other codec-based backbones; on CosyVoice2 it reaches a
 Chinese-character MAE of 0.284 with the same architecture. The released head is
-[`zehan1/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz),
+[`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz),
 and it is integrated in the upstream engine (`dev` branch) as a reference integration:
 
 ```yaml
@@ -327,9 +327,9 @@ the paper; `.[torch]` is needed for the acoustic mechanism.
 
 ```bash
 pip install -U "huggingface_hub[cli]"
-huggingface-cli download zehan1/X2Streaming-TTS-1.7B \
+huggingface-cli download x-square-robot/X2Streaming-TTS-1.7B \
   --local-dir ./weights/X2Streaming-TTS-1.7B
-huggingface-cli download zehan1/X2-NativeCursor-Qwen3TTS-12Hz \
+huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
 ```
 

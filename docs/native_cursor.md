@@ -4,7 +4,7 @@
 
 > Status: shipped in the upstream Qwen3TTS-Streaming engine (`dev` branch) as a
 > reference integration; the released head is
-> [`zehan1/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/zehan1/X2-NativeCursor-Qwen3TTS-12Hz).
+> [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz).
 > Manuscript under review. The hook patches in this repository target upstream commit
 > `0745e4a8`, which predates the observer.
 
@@ -113,7 +113,7 @@ session's own audio is [`assets/native_cursor_lab.mp4`](assets/native_cursor_lab
 Download the head and place it under the engine's `resources/native_cursor/`:
 
 ```bash
-huggingface-cli download zehan1/X2-NativeCursor-Qwen3TTS-12Hz \
+huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
 cp ./weights/X2-NativeCursor-Qwen3TTS-12Hz/qwen3_tts_12hz_la1_seed0.pt \
    <Qwen3TTS-Streaming>/resources/native_cursor/
