@@ -88,7 +88,6 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 - [X2-NativeCursor：从原生 token 读出朗读进度](#x2-nativecursor从原生-token-读出朗读进度)
 - [Demo](#demo)
 - [快速开始](#快速开始)
-- [论文对照](#论文对照)
 - [仓库布局](#仓库布局)
 - [状态与限制](#状态与限制)
 - [相关项目](#相关项目)
@@ -383,26 +382,6 @@ python scripts/run_checkpoint_e2e.py \
 
 `scripts/stress_x2streaming_cuda.py` 连续跑数千个片段，检验状态继承长期运行的稳定性；
 `scripts/benchmark_bridge_cuda.py` 在每张可见 GPU 上单独测文本—声学桥的耗时。
-
-## 论文对照
-
-| 论文内容 | 代码位置 |
-| --- | --- |
-| 不确定性感知的语义就绪判定、`E_t`/`U_t` 划分 | `commitment/rule_boundary.py` |
-| 已释放文本片段的正则化 | `commitment/text_normalizer.py`、`commitment/text_normalization.py` |
-| 延迟反馈的容量 EMA 与预测容量 | `commitment/capacity.py`（`AdaptiveCapacityEstimator`） |
-| 因果的标点感知停止规则与第四档硬切 | `commitment/capacity.py`（`CausalCommitmentController`） |
-| 两条独立状态通路与健康门 | `inheritance/speech_state_inheritance.py` |
-| 固定因果注意力先验与有界注入 | `inheritance/speech_state_inheritance.py`（`build_text_acoustic_bridge`） |
-
-论文报告的超参数就是 `config.py` 中的默认值：初始扩张比 6.0、EMA 权重 0.1（溢出后
-0.5）、比值裁剪区间 `[2, 10]`、三档阈值 `(0.7, 0.8, 0.9)`、健康门比值区间
-`[1, 12]`、继承的 Talker 历史长度 `H = 4`、内容项系数 2.0、残差增益上界 0.015。
-位置先验 `text_acoustic_bridge_position_bias` 即论文中 `b(d)` 的查表形式。
-
-与论文一致，每段最多能生成多少由引擎实际的 cache 上限决定：打过补丁的切分器把
-prefill 之后剩余的预算传给 `split_thresholds`，策略据此推算容量。
-`CapacityConfig.decode_budget` 只在脱离引擎独立运行时作为回退值。
 
 ## 仓库布局
 

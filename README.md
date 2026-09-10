@@ -92,7 +92,6 @@ Each model card lists the files, SHA-256 checksums, usage and scope.
 - [X2-NativeCursor: reading progress from native tokens](#x2-nativecursor-reading-progress-from-native-tokens)
 - [Demo](#demo)
 - [Getting started](#getting-started)
-- [Paper mapping](#paper-mapping)
 - [Repository layout](#repository-layout)
 - [Status and limitations](#status-and-limitations)
 - [Related projects](#related-projects)
@@ -404,28 +403,6 @@ python scripts/run_checkpoint_e2e.py \
 `scripts/stress_x2streaming_cuda.py` exercises the bounded-state path over thousands of
 segments, and `scripts/benchmark_bridge_cuda.py` times the text-acoustic bridge in
 isolation on every visible GPU.
-
-## Paper mapping
-
-| Paper element | Location |
-| --- | --- |
-| Uncertainty-aware semantic readiness, `E_t`/`U_t` partition | `commitment/rule_boundary.py` |
-| Normalization of released spans | `commitment/text_normalizer.py`, `commitment/text_normalization.py` |
-| Delayed-feedback capacity EMA and predicted capacity | `commitment/capacity.py` (`AdaptiveCapacityEstimator`) |
-| Causal punctuation-aware stopping rule and tier-4 hard cap | `commitment/capacity.py` (`CausalCommitmentController`) |
-| Two independent state paths and the health gate | `inheritance/speech_state_inheritance.py` |
-| Fixed causal attention prior and bounded injection | `inheritance/speech_state_inheritance.py` (`build_text_acoustic_bridge`) |
-
-The hyperparameters reported in the paper are the defaults in `config.py`: initial
-expansion ratio 6.0, EMA weight 0.1 and 0.5 after overflow, ratio clip `[2, 10]`, tier
-thresholds `(0.7, 0.8, 0.9)`, health-gate ratio interval `[1, 12]`, inherited Talker
-history `H = 4`, content scale 2.0 and residual gain bound 0.015. The positional prior
-`text_acoustic_bridge_position_bias` tabulates the paper's `b(d)`.
-
-As in the paper, the usable cache limit is read from the loaded engine: the patched
-splitter passes its post-prefill budget to `split_thresholds`, and the policy derives
-capacity from that value. `CapacityConfig.decode_budget` is only the fallback for
-standalone use when no engine reports a budget.
 
 ## Repository layout
 
