@@ -16,15 +16,18 @@ All notable changes to X2Streaming-TTS are documented here. The format follows
   Models table, badges and a download step in the README.
 - README rebuilt around the paper: problem statement, the two mechanisms with the
   paper's figures, headline results, demo recordings, related projects and citation.
-- X2-NativeCursor feature page (`docs/native_cursor.md`) describing the native-token
-  progress observer that ships in the upstream `dev` branch, with its research and
-  engine-acceptance numbers and the engine configuration to enable it.
+- X2-NativeCursor feature page (`docs/native_cursor.md`) with research and engine
+  acceptance results and the configuration used by the reference integration.
+  The observer weights are released separately; runtime integration is not included.
 - `docs/assets/` with the paper figures, the X2-NativeCursor method figure and the
   demo screen recordings used by the README.
 - This changelog.
 
 ### Changed
 
+- Corrected local-checkpoint export steps, NativeCursor release scope and reported
+  baseline details; updated download examples to the `hf` CLI.
+- Expanded model and text-normalizer attribution in `THIRD_PARTY.md` and `NOTICE`.
 - `CITATION.cff` now lists the authors as they appear on arXiv, carries the arXiv
   identifier and references the upstream engine and X2-Turn.
 - `pyproject.toml` links the paper, the changelog and X2-Turn.

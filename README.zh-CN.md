@@ -52,10 +52,10 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
   已公开，BibTeX 见[引用](#引用)。
 - **[2026-09-07] X2-NativeCursor：从生成器自己的 token 里读出朗读进度。**
   流式 TTS 在句子写完之前就开始说话，客户端收到音频时需要知道它对应原文的哪几个字。
-  X2-NativeCursor 是一个约 2M 参数的小模型，读取 Talker 每 80 ms 输出的 codebook-0
+  X2-NativeCursor 是一个约 2M 参数的小模型，读取每个对应 80 ms 语音的 codebook-0
   token，实时给出"现在读到原文第几个字"，位置始终向前。整个过程只增加这一个小模型，
-  TTS 生成器、tokenizer 和声码器保持原样。它已随上游引擎发布，在配置里写
-  `text_progress.estimator: native` 即可打开；见下文
+  TTS 生成器、tokenizer 和声码器保持原样。观察器权重已单独发布；本次发布尚未包含
+  配套的运行时集成。见下文
   [X2-NativeCursor](#x2-nativecursor从原生-token-读出朗读进度) 与
   [功能页](docs/native_cursor.zh-CN.md)。
 - **[2026-09-07] 权重开源。** 部署版 checkpoint
@@ -75,8 +75,8 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 
 | 仓库 | 内容 | 大小 | 许可 |
 | --- | --- | --: | --- |
-| [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B) | 由 Qwen3-TTS-12Hz-1.7B-Base 微调的 CustomVoice 模型，音色 `robot_service_v1`，Hugging Face 格式（safetensors + 12 Hz 语音 tokenizer），可直接交给上游引擎导出 TensorRT | 4.3 GB | Apache-2.0 |
-| [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz) | 朗读进度观察器头，2.0M 参数，读取上述模型的 codebook-0 token；放入引擎的 `resources/native_cursor/` 即可启用 | 8.2 MB | Apache-2.0 |
+| [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B) | 由 Qwen3-TTS-12Hz-1.7B-Base 微调的 CustomVoice 模型，音色 `robot_service_v1`，Hugging Face 格式（safetensors + 12 Hz 语音 tokenizer），可直接交给上游引擎导出 TensorRT | ~4.52 GB | Apache-2.0 |
+| [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz) | 朗读进度观察器头，2.0M 参数，读取上述模型的 codebook-0 token；需要配套的 NativeCursor 运行时集成 | 8.2 MB | Apache-2.0 |
 
 两个仓库的 model card 各自写明了文件清单、SHA-256、用法与适用范围。
 
@@ -218,8 +218,8 @@ token 级流式一旦跑通，第二个问题立刻出现：**刚收到的这段
 固定多少帧音频"只是粗略估算；跑一个语音对齐模型可以拿到准确位置，但每一路都要多付
 一个声学模型的开销。
 
-X2-NativeCursor 在**波形解码之前**就给出答案。Talker 每 80 ms 输出一个 codebook-0
-token；一个轻量的观察器读取它，和目前已到达文本的读音逐个比对，估计现在读到了哪里。
+X2-NativeCursor 在**波形解码之前**就给出答案。每个 codebook-0 token 对应 80 ms 语音；
+一个轻量的观察器读取它，和目前已到达文本的读音逐个比对，估计现在读到了哪里。
 对外发布的位置只取到目前为止到达过的最远处，再换算回原文的字数，所以即使读音顺序和
 书写顺序不同（`99%` 读作"百分之九十九"），位置也始终向前。生成器、tokenizer 和声码器
 保持原样。
@@ -241,7 +241,7 @@ token；一个轻量的观察器读取它，和目前已到达文本的读音逐
 观察器可以为其他基于离散语音 token 的 TTS 重新训练；在 CosyVoice2 上用同一结构得到
 平均 0.284 个汉字的误差。发布的观察器头在
 [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)，
-它已作为参考集成进入上游引擎（`dev` 分支）：
+使用时需要配套的 NativeCursor 运行时集成，本次发布尚未包含该实现。以下配置对应评测所用的参考实现：
 
 ```yaml
 # Qwen3TTS-Streaming 的 engine.yaml
@@ -250,11 +250,9 @@ text_progress:
   native_head_path: resources/native_cursor/qwen3_tts_12hz_la1_seed0.pt
 ```
 
-进度沿用现有的 `text_progress` 事件下发，事件里带 `progress_basis=native_cursor_v1`，
-现有客户端直接可用。细节与事件格式见[功能页](docs/native_cursor.zh-CN.md)；设计文档与代码在
-上游引擎的
-[`docs/dev/design/native_cursor_progress.zh-CN.md`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/docs/dev/design/native_cursor_progress.zh-CN.md)
-与 [`engine/core/native_cursor/`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/tree/dev/engine/core/native_cursor)。
+参考实现通过 `text_progress` 事件下发进度，事件里带 `progress_basis=native_cursor_v1`。
+客户端结合播放时钟，将已生成音频的进度换算为实际已播放的位置。参考配置与适用范围见
+[功能页](docs/native_cursor.zh-CN.md)。
 
 ## Demo
 
@@ -282,8 +280,7 @@ text_progress:
 
 要运行门户，先部署上游引擎，再打开实例上的 `/demo/`；见上游引擎的
 [部署指南](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/deployment.zh-CN.md)。
-[News](#-news) 里的 X2-NativeCursor 实验台是上游引擎的
-[`tools/validation/native_cursor_demo.py --serve 8800`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tools/validation/native_cursor_demo.py)。
+[News](#-news) 中的 X2-NativeCursor 录屏使用[功能页](docs/native_cursor.zh-CN.md)所述的参考集成。
 
 ## 快速开始
 
@@ -309,10 +306,10 @@ git submodule update --init --recursive
 ### 下载权重
 
 ```bash
-pip install -U "huggingface_hub[cli]"
-huggingface-cli download x-square-robot/X2Streaming-TTS-1.7B \
+pip install -U "huggingface_hub"
+hf download x-square-robot/X2Streaming-TTS-1.7B \
   --local-dir ./weights/X2Streaming-TTS-1.7B
-huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
+hf download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
 ```
 
@@ -362,13 +359,21 @@ extensions = build_policy_factories(policy).to_upstream()
 
 ### 对着真实 checkpoint 跑
 
-先在打过补丁的 worktree 里用上游引擎的流水线编译 TensorRT 引擎。`custom-1.7b` 变体
-从 `workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice` 读取权重，把上面下载的目录软链接
-到这个位置，并跳过官方权重下载：
+先在打过补丁的 worktree 里准备导出环境。`custom-1.7b` 变体从
+`workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice` 读取权重：
 
 ```bash
+mkdir -p "$hook_tree/workspace/models"
 ln -s "$PWD/weights/X2Streaming-TTS-1.7B" "$hook_tree/workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
-(cd "$hook_tree" && SKIP_MODELS=1 bash scripts/bash/autorun.sh all -m custom-1.7b)
+ln -s "$PWD/weights/X2Streaming-TTS-1.7B/speech_tokenizer" "$hook_tree/workspace/models/Qwen3-TTS-Tokenizer-12Hz"
+(cd "$hook_tree" && bash scripts/bash/autorun.sh setup -m custom-1.7b --skip-models --env-name x2streaming-export)
+```
+
+按 setup 输出的提示激活 Python 环境，再显式导出本地 checkpoint 并编译 TensorRT 引擎：
+
+```bash
+(cd "$hook_tree" && python scripts/export/export_all.py --variant custom-1.7b)
+(cd "$hook_tree" && bash scripts/bash/autorun.sh build -m custom-1.7b)
 ```
 
 然后向打过补丁的引擎发一条请求：
@@ -376,7 +381,7 @@ ln -s "$PWD/weights/X2Streaming-TTS-1.7B" "$hook_tree/workspace/models/Qwen3-TTS
 ```bash
 python scripts/run_checkpoint_e2e.py \
   --upstream-root "$hook_tree" \
-  --engine-dir <path-to-model.plan-dir> \
+  --engine-dir /path/to/model.plan-dir \
   --weights-dir ./weights/X2Streaming-TTS-1.7B \
   --tokenizer-dir ./weights/X2Streaming-TTS-1.7B
 ```
@@ -412,9 +417,8 @@ X2Streaming-TTS/
 - **预发布。** 代码抽取与两个补丁构成的 hook 序列均已实现，并已在 RTX 4090 D 上用真实的
   `custom-1.7b` TensorRT checkpoint 跑通。在第一个 release candidate 之前，更广泛的
   故障注入、并发与长流测试仍在进行中。
-- **上游引擎的固定版本。** 补丁对应上游引擎提交 `0745e4a8`。要用在更新的提交上（包括
-  带 X2-NativeCursor 的 `dev` 分支），补丁需要重新适配；同样的通用 hook 正在提交给上游
-  引擎，合入后这些补丁就可以去掉。
+- **上游引擎的固定版本。** 补丁对应上游引擎提交 `0745e4a8`。要用在更新的提交上或与
+  NativeCursor 参考集成结合，补丁需要重新适配。
 - **继承引擎的注意事项。** 流式幻觉、重复与漏读强依赖 checkpoint，见上游引擎的
   [已知限制](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/known_limitations.zh-CN.md)。
 - **数字有条件。** 时延数字取决于论文所述的 GPU、精度、并发与测量窗口，请结合条件解读。
@@ -432,7 +436,7 @@ X2-Turn 判断用户何时说完，大模型逐 token 回复，X2Streaming-TTS �
 | --- | --- | --- |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | 帧同步的流式语音识别，带轮次状态头，每 80 ms 判断一次 `idle` / `speaking` / `turn_end` / `backchannel`；附带以 Qwen3TTS-Streaming 为 TTS 的全双工对话 demo | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot 的流式 TTS 推理引擎：把 Qwen3-TTS 导出为 ONNX/TensorRT，提供连续批处理、prefix cache、原生 WebSocket / OpenAI Realtime 网关，以及 Python 与浏览器 SDK；本仓库的方法就跑在它上面 | — |
-| **X2Streaming-TTS**（本仓库） | 引擎之上的因果承诺与因果语音状态继承，以及 X2-NativeCursor 进度跟踪 | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661)、[X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
+| **X2Streaming-TTS**（本仓库） | 引擎之上的因果承诺与因果语音状态继承，附配套 X2-NativeCursor 观察器的说明 | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661)、[X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
 
 ## 引用
 

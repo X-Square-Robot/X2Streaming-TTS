@@ -55,9 +55,10 @@ submodule at commit `0745e4a8`.
 - **[2026-09-07] X2-NativeCursor: reading progress read from the generator's own tokens.**
   Streaming TTS starts speaking before the sentence is finished, so a client receives
   audio without knowing which characters it carries. A 2M-parameter observer reads the
-  codebook-0 token the Talker emits every 80 ms and publishes a cursor into the source
+  codebook-0 tokens, each representing 80 ms of speech, and publishes a cursor into the source
   text that never moves backward. The generator, tokenizer and vocoder stay as they
-  are; the observer is the only addition. It ships in the upstream engine behind `text_progress.estimator: native`; see
+  are; the observer is the only addition. Observer weights are available separately;
+  the matching runtime integration is not included in this release. See
   [X2-NativeCursor](#x2-nativecursor-reading-progress-from-native-tokens) below and the
   [feature page](docs/native_cursor.md).
 - **[2026-09-07] Weights released.** The deployed checkpoint
@@ -78,8 +79,8 @@ submodule at commit `0745e4a8`.
 
 | Repository | Contents | Size | License |
 | --- | --- | --: | --- |
-| [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B) | CustomVoice model fine-tuned from Qwen3-TTS-12Hz-1.7B-Base, speaker `robot_service_v1`, Hugging Face format (safetensors + 12 Hz speech tokenizer); the upstream engine exports it to TensorRT as the `custom-1.7b` variant | 4.3 GB | Apache-2.0 |
-| [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz) | Reading-progress observer head, 2.0M parameters, reads the codebook-0 tokens of the model above; drop it into the engine's `resources/native_cursor/` to enable | 8.2 MB | Apache-2.0 |
+| [`x-square-robot/X2Streaming-TTS-1.7B`](https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B) | CustomVoice model fine-tuned from Qwen3-TTS-12Hz-1.7B-Base, speaker `robot_service_v1`, Hugging Face format (safetensors + 12 Hz speech tokenizer); the upstream engine exports it to TensorRT as the `custom-1.7b` variant | ~4.52 GB | Apache-2.0 |
+| [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz) | Reading-progress observer head, 2.0M parameters, reads the codebook-0 tokens of the model above; requires the matching NativeCursor runtime integration | 8.2 MB | Apache-2.0 |
 
 Each model card lists the files, SHA-256 checksums, usage and scope.
 
@@ -232,8 +233,8 @@ timing and dialogue history all need that position, and a fixed audio-frames-per
 ratio only approximates it. Running a waveform aligner recovers it, at the cost of a
 second acoustic model per stream.
 
-X2-NativeCursor answers the question **before waveform decoding**. Every 80 ms the
-Talker emits one codebook-0 token; a lightweight observer reads it, scores it against
+X2-NativeCursor answers the question **before waveform decoding**. Each codebook-0
+token represents 80 ms of speech; a lightweight observer reads it, scores it against
 the spoken labels of the text visible so far and advances a continuous position. The
 published cursor is the high-water mark of that position, projected back into the raw
 text, so it never moves backward even when the spoken order differs from the written
@@ -256,7 +257,9 @@ order (`99%` → 百分之九十九). The generator, tokenizer and vocoder are u
 The observer retrains for other codec-based backbones; on CosyVoice2 it reaches a
 Chinese-character MAE of 0.284 with the same architecture. The released head is
 [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz),
-and it is integrated in the upstream engine (`dev` branch) as a reference integration:
+and requires a matching NativeCursor runtime integration. That integration is not
+included in this release; the following configuration describes the reference
+implementation used for evaluation:
 
 ```yaml
 # engine.yaml in Qwen3TTS-Streaming
@@ -265,11 +268,10 @@ text_progress:
   native_head_path: resources/native_cursor/qwen3_tts_12hz_la1_seed0.pt
 ```
 
-Anchors ride the existing `text_progress` events with `progress_basis=native_cursor_v1`,
-so clients need no change. Details and the wire contract are on the
-[feature page](docs/native_cursor.md); the design document and code live upstream in
-[`docs/dev/design/native_cursor_progress.md`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/docs/dev/design/native_cursor_progress.md)
-and [`engine/core/native_cursor/`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/tree/dev/engine/core/native_cursor).
+The reference implementation emits `text_progress` events with
+`progress_basis=native_cursor_v1`. Clients use the playback clock to translate
+generated-audio progress into the position actually played. See the
+[feature page](docs/native_cursor.md) for the reference configuration and scope.
 
 ## Demo
 
@@ -298,9 +300,8 @@ numbers on screen are live results.
 
 To run the portal, deploy the upstream engine and open `/demo/` on the running
 instance; see the upstream [deployment guide](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/deployment.md).
-The X2-NativeCursor lab page shown in [News](#-news) is
-[`tools/validation/native_cursor_demo.py --serve 8800`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tools/validation/native_cursor_demo.py)
-upstream.
+The X2-NativeCursor recording in [News](#-news) uses the reference integration
+described on the [feature page](docs/native_cursor.md).
 
 ## Getting started
 
@@ -326,10 +327,10 @@ the paper; `.[torch]` is needed for the acoustic mechanism.
 ### Download the weights
 
 ```bash
-pip install -U "huggingface_hub[cli]"
-huggingface-cli download x-square-robot/X2Streaming-TTS-1.7B \
+pip install -U "huggingface_hub"
+hf download x-square-robot/X2Streaming-TTS-1.7B \
   --local-dir ./weights/X2Streaming-TTS-1.7B
-huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
+hf download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
 ```
 
@@ -382,13 +383,22 @@ QK-consensus attention traces, direct Talker KV-cache carry or audio-boundary tr
 
 ### Run against a real checkpoint
 
-Build the TensorRT engine with the upstream pipeline in the patched worktree. The
-`custom-1.7b` variant reads its weights from `workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice`,
-so symlink the downloaded directory there and skip the official download:
+Prepare the export environment in the patched worktree. The `custom-1.7b` variant
+reads its weights from `workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice`:
 
 ```bash
+mkdir -p "$hook_tree/workspace/models"
 ln -s "$PWD/weights/X2Streaming-TTS-1.7B" "$hook_tree/workspace/models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
-(cd "$hook_tree" && SKIP_MODELS=1 bash scripts/bash/autorun.sh all -m custom-1.7b)
+ln -s "$PWD/weights/X2Streaming-TTS-1.7B/speech_tokenizer" "$hook_tree/workspace/models/Qwen3-TTS-Tokenizer-12Hz"
+(cd "$hook_tree" && bash scripts/bash/autorun.sh setup -m custom-1.7b --skip-models --env-name x2streaming-export)
+```
+
+Activate the Python environment reported by setup, then explicitly export the local
+checkpoint and build the TensorRT engines:
+
+```bash
+(cd "$hook_tree" && python scripts/export/export_all.py --variant custom-1.7b)
+(cd "$hook_tree" && bash scripts/bash/autorun.sh build -m custom-1.7b)
 ```
 
 Then run one isolated request through the patched engine:
@@ -396,7 +406,7 @@ Then run one isolated request through the patched engine:
 ```bash
 python scripts/run_checkpoint_e2e.py \
   --upstream-root "$hook_tree" \
-  --engine-dir <path-to-model.plan-dir> \
+  --engine-dir /path/to/model.plan-dir \
   --weights-dir ./weights/X2Streaming-TTS-1.7B \
   --tokenizer-dir ./weights/X2Streaming-TTS-1.7B
 ```
@@ -436,8 +446,8 @@ integration rules.
   Broader fault, concurrency and long-stream validation is still in progress before the
   first release candidate.
 - **Pinned upstream.** The hooks target upstream commit `0745e4a8`. Newer upstream
-  commits (including the `dev` branch that carries X2-NativeCursor) need a re-based patch
-  series; the same generic hooks are being proposed upstream so the patches can retire.
+  commits and the NativeCursor reference integration need a re-based patch
+  series.
 - **Inherits the engine's caveats.** Streaming hallucination, repetition and dropped
   reading depend strongly on the checkpoint; see the upstream
   [known limitations](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/known_limitations.md).
@@ -459,7 +469,7 @@ while it is still being written.
 | --- | --- | --- |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | Frame-synchronous streaming ASR with a turn-state head that predicts `idle` / `speaking` / `turn_end` / `backchannel` every 80 ms; ships a full-duplex dialogue demo that uses Qwen3TTS-Streaming as its TTS | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot's streaming TTS inference engine: exports Qwen3-TTS to ONNX/TensorRT and serves token-level streaming TTS with continuous batching, prefix cache, native WebSocket / OpenAI Realtime gateways and a Python/browser SDK; the method in this repository runs on it | — |
-| **X2Streaming-TTS** (this repository) | Causal commitment and causal speech-state inheritance on top of the engine, plus X2-NativeCursor progress tracking | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661), [X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
+| **X2Streaming-TTS** (this repository) | Causal commitment and causal speech-state inheritance on top of the engine, with documentation for the companion X2-NativeCursor observer | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661), [X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
 
 ## Citation
 

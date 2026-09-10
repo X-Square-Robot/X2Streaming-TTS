@@ -2,9 +2,10 @@
 
 # X2-NativeCursor：从原生 token 读出朗读进度
 
-> 状态：已作为参考集成随上游 Qwen3TTS-Streaming 引擎（`dev` 分支）发布；发布的观察器头在
+> 状态：观察器权重已发布在
 > [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)。
-> 论文评审中。本仓库的 hook 补丁对应上游引擎提交 `0745e4a8`，早于观察器的加入。
+> 本次发布尚未包含配套的运行时集成，下文配置对应评测所用的参考实现。
+> 本仓库的 hook 补丁对应上游引擎提交 `0745e4a8`，早于观察器的加入。
 
 ## 问题
 
@@ -26,7 +27,7 @@ codec 类 TTS 在把语音解码成波形之前，先产生离散的语音 token
    原文的哪个区间。`99%` 的所有标签共享 `99%` 这个区间，所以即使读音顺序和书写顺序
    不同，投影回原文也是精确的。标签只在读法不可能再改变时才释放。
 2. **原生 token 编码器**用一小叠膨胀卷积和一帧前瞻，对 Talker 输出的每个 codebook-0
-   token（Qwen3-TTS 上每 80 ms 一个）做嵌入。
+   token（Qwen3-TTS 上每个对应 80 ms 语音）做嵌入。
 3. **局部匹配器**把上一位置附近的标签（偏移 −2 到 +4）与当前 token 特征和一个小的
    位置状态（小数位置、停留时间、近期推进量）打分，再按期望偏移移动一个连续的内部
    位置。内部估计允许后退或跳过标签。
@@ -50,7 +51,7 @@ codec 类 TTS 在把语音解码成波形之前，先产生离散的语音 token
 | MMS-FA（完整音频） | ✗ | ∞ | 315.5 M | 0.539 | 1.610 | 0.430 |
 | CTC-segmentation（完整音频） | ✗ | ∞ | 315.5 M | 0.371 | – | 0.418 |
 | WindowMMS+PersistentCTC（在线波形） | ✓ | 320 ms | 315.5 M | 1.253 | 2.226 | 0.341 |
-| Cross-attention readout（原生 token） | ✗ | 320 ms | 2.490 M | 0.414 | 1.629 | 0.828 |
+| Cross-attention readout（原生 token） | ✓ | 320 ms | 2.490 M | 0.414 | 1.629 | 0.828 |
 | CodecCTC+skip-DP（原生 token） | ✓ | 320 ms | 1.705 M | 0.416 | 1.568 | 0.823 |
 | **X2-NativeCursor** | ✓ | **80 ms** | 2.166 M | **0.151 ± 0.005** | **1.247** | **0.924** |
 
@@ -60,7 +61,7 @@ MAE 为 0.206，排序不变。在 CosyVoice2 的 token 上重训观察器，同
 
 <div align="center">
   <img src="assets/native_cursor_backbones.png" width="420" alt="同一文本流下 Qwen3-TTS 与 CosyVoice2 的游标跟踪">
-  <p><em>同一句话、同一文本到达节奏，在 Qwen3-TTS（80 ms 帧）与 CosyVoice2（40 ms 帧）上的游标。每条游标都在各自参考的两字以内，并且始终落在已到达的文本范围内。</em></p>
+  <p><em>同一句话、同一文本到达节奏，在 Qwen3-TTS（80 ms 帧）与 CosyVoice2（40 ms 帧）上的游标。此示例中，每条游标都在各自参考的两字以内，并且始终落在已到达的文本范围内。</em></p>
 </div>
 
 **引擎验收**（上游引擎自己合成的 80 条留出语句，实时 `text_progress` 锚点，同一参考）：
@@ -77,7 +78,7 @@ MAE 为 0.206，排序不变。在 CosyVoice2 的 token 上重训观察器，同
 
 <div align="center">
   <img src="assets/native_cursor_concurrency.png" width="420" alt="1、4、16 路并发下的每帧观察器开销">
-  <p><em>单张 A800 上的独立计时：模型前向中位数，以及一次完整游标更新的中位数 / p90。</em></p>
+  <p><em>论文中单张 A800 上的独立 GPU 计时：模型前向中位数，以及一次完整游标更新的中位数 / p90。上表另列的是参考集成的 CPU 计时。</em></p>
 </div>
 
 ## 实时演示
@@ -86,24 +87,22 @@ MAE 为 0.206，排序不变。在 CosyVoice2 的 token 上重训观察器，同
   <img src="assets/native_cursor_lab.gif" width="820" alt="OrangePilot 实验台页面">
 </div>
 
-录屏是上游的实验台页面
-（[`tools/validation/native_cursor_demo.py --serve 8800`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tools/validation/native_cursor_demo.py)）
+录屏展示参考集成的实验台页面
 通过原生 WebSocket 对着真实引擎运行。每一步高亮、轨迹上的每一个点都是真实的
 `text_progress` 锚点。带本次会话原声的完整片段：
 [`assets/native_cursor_lab.mp4`](assets/native_cursor_lab.mp4)。
 
-## 在引擎中启用
+## 参考集成
 
-下载观察器头，放到引擎的 `resources/native_cursor/` 下：
+下载观察器头：
 
 ```bash
-huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
+hf download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
-cp ./weights/X2-NativeCursor-Qwen3TTS-12Hz/qwen3_tts_12hz_la1_seed0.pt \
-   <Qwen3TTS-Streaming>/resources/native_cursor/
 ```
 
-然后切换估计器：
+以下配置需要包含 NativeCursor 运行时集成的引擎版本，本次发布尚未包含该实现。
+在具备该实现的引擎中，将观察器头放入 `resources/native_cursor/` 后切换估计器：
 
 ```yaml
 # engine.yaml
@@ -113,19 +112,13 @@ text_progress:
   native_device: auto                    # auto（= cpu）| cpu | cuda | cuda:N
 ```
 
-也可以用环境变量打开：`ENGINE_TEXT_PROGRESS_ESTIMATOR=native`。观察器运行在前端线程；
-`auto` 解析为 CPU，因为引擎线程全局捕获 CUDA graph，另一个线程上的第二个 CUDA 上下文
-会使其失效。
+参考实现也支持环境变量 `ENGINE_TEXT_PROGRESS_ESTIMATOR=native`。观察器运行在前端线程，
+`auto` 解析为 CPU。
 
-锚点沿用现有的 `text_progress` 事件，现有客户端直接可用。每个锚点带
+锚点沿用现有的 `text_progress` 事件格式。客户端结合播放时钟，将生成进度换算为实际
+已播放的位置。每个锚点带
 `progress_basis = native_cursor_v1` 与 `progress_quality = aligned`；头未加载或会话
 尚无原生 token 时，内置的 `ema` 估计器仍作为回退。
-
-设计文档、线协议与 golden 测试都在上游：
-
-- [`docs/dev/design/native_cursor_progress.zh-CN.md`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/docs/dev/design/native_cursor_progress.zh-CN.md)
-- [`engine/core/native_cursor/`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/tree/dev/engine/core/native_cursor)
-- [`tests/unit/engine_core/test_native_cursor.py`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tests/unit/engine_core/test_native_cursor.py)
 
 ## 与本仓库的关系
 
@@ -134,4 +127,4 @@ X2-NativeCursor 是论文方法的配套模块。因果承诺决定*什么*可�
 *哪里*。它复用因果承诺产出的同一套 TNPlan 归属区间，所以游标在正则化表达上也能精确。
 
 本仓库的 hook 补丁对应上游引擎提交 `0745e4a8`，早于观察器的加入。要让两套机制同时运行，
-需要把补丁序列变基到 `dev` 分支；这项工作列入下一版本计划。
+需要把补丁序列适配到包含配套 NativeCursor 运行时集成的引擎版本。

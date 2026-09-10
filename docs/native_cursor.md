@@ -2,11 +2,11 @@
 
 # X2-NativeCursor: reading progress from native tokens
 
-> Status: shipped in the upstream Qwen3TTS-Streaming engine (`dev` branch) as a
-> reference integration; the released head is
+> Status: observer weights are available at
 > [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz).
-> Manuscript under review. The hook patches in this repository target upstream commit
-> `0745e4a8`, which predates the observer.
+> The matching runtime integration is not included in this release. Configuration
+> below describes the reference implementation used for evaluation. The hook patches
+> in this repository target upstream commit `0745e4a8`, which predates the observer.
 
 ## The problem
 
@@ -33,8 +33,8 @@ directly:
    of `99%` share the span of `99%`, so the projection back to the raw text is exact
    even when reading order and writing order differ. Labels are released only once
    their reading can no longer change.
-2. A **native-token encoder** embeds each codebook-0 token the Talker emits (one per
-   80 ms on Qwen3-TTS) with a small stack of dilated convolutions and one frame of
+2. A **native-token encoder** embeds each codebook-0 token the Talker emits (each
+   represents 80 ms of speech on Qwen3-TTS) with a small stack of dilated convolutions and one frame of
    lookahead.
 3. A **local matcher** scores the labels around the previous position (offsets −2 to
    +4) against the current token feature and a small location state (fractional
@@ -63,7 +63,7 @@ character chunks; reference = Qwen3-ForcedAligner; three seeds):
 | MMS-FA (complete audio) | ✗ | ∞ | 315.5 M | 0.539 | 1.610 | 0.430 |
 | CTC-segmentation (complete audio) | ✗ | ∞ | 315.5 M | 0.371 | – | 0.418 |
 | WindowMMS+PersistentCTC (online waveform) | ✓ | 320 ms | 315.5 M | 1.253 | 2.226 | 0.341 |
-| Cross-attention readout (native tokens) | ✗ | 320 ms | 2.490 M | 0.414 | 1.629 | 0.828 |
+| Cross-attention readout (native tokens) | ✓ | 320 ms | 2.490 M | 0.414 | 1.629 | 0.828 |
 | CodecCTC+skip-DP (native tokens) | ✓ | 320 ms | 1.705 M | 0.416 | 1.568 | 0.823 |
 | **X2-NativeCursor** | ✓ | **80 ms** | 2.166 M | **0.151 ± 0.005** | **1.247** | **0.924** |
 
@@ -74,7 +74,7 @@ with the same architecture.
 
 <div align="center">
   <img src="assets/native_cursor_backbones.png" width="420" alt="Cursor tracking on Qwen3-TTS and CosyVoice2 under the same text stream">
-  <p><em>The same sentence under the same text-arrival schedule on Qwen3-TTS (80 ms frames) and CosyVoice2 (40 ms frames). Each cursor stays within two characters of its own reference and never runs ahead of the text received so far.</em></p>
+  <p><em>The same sentence under the same text-arrival schedule on Qwen3-TTS (80 ms frames) and CosyVoice2 (40 ms frames). In this example, each cursor stays within two characters of its own reference and never runs ahead of the text received so far.</em></p>
 </div>
 
 **Engine acceptance** (the upstream engine's own audio on 80 held-out utterances,
@@ -93,7 +93,7 @@ budget at these concurrency levels.
 
 <div align="center">
   <img src="assets/native_cursor_concurrency.png" width="420" alt="Per-frame observer cost at 1, 4 and 16 concurrent sessions">
-  <p><em>Standalone timing on one A800: median model forward and median / p90 for a complete cursor update.</em></p>
+  <p><em>Separate GPU measurement from the paper on one A800: median model forward and median / p90 for a complete cursor update. The table above reports CPU reference-integration timings.</em></p>
 </div>
 
 ## Live demo
@@ -102,24 +102,23 @@ budget at these concurrency levels.
   <img src="assets/native_cursor_lab.gif" width="820" alt="OrangePilot lab page">
 </div>
 
-The recording shows the upstream lab page
-([`tools/validation/native_cursor_demo.py --serve 8800`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tools/validation/native_cursor_demo.py))
+The recording shows the reference integration's lab page
 talking to a live engine over its native WebSocket. Every highlight step and every
 point on the trajectory is a real `text_progress` anchor. The full clip with the
 session's own audio is [`assets/native_cursor_lab.mp4`](assets/native_cursor_lab.mp4).
 
-## Enabling it in the engine
+## Reference integration
 
-Download the head and place it under the engine's `resources/native_cursor/`:
+Download the observer head:
 
 ```bash
-huggingface-cli download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
+hf download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
   --local-dir ./weights/X2-NativeCursor-Qwen3TTS-12Hz
-cp ./weights/X2-NativeCursor-Qwen3TTS-12Hz/qwen3_tts_12hz_la1_seed0.pt \
-   <Qwen3TTS-Streaming>/resources/native_cursor/
 ```
 
-Then switch the estimator:
+The following configuration requires an engine build that includes the NativeCursor
+runtime integration, which is not included in this release. In that build, place the
+head under `resources/native_cursor/` and select the native estimator:
 
 ```yaml
 # engine.yaml
@@ -129,20 +128,14 @@ text_progress:
   native_device: auto                    # auto (= cpu) | cpu | cuda | cuda:N
 ```
 
-Or, without editing the file, `ENGINE_TEXT_PROGRESS_ESTIMATOR=native`. The observer
-runs on the frontend thread; `auto` resolves to CPU because the engine thread captures
-CUDA graphs globally and a second CUDA context on another thread would invalidate them.
+In the reference implementation, `ENGINE_TEXT_PROGRESS_ESTIMATOR=native` selects the
+same estimator. The observer runs on the frontend thread; `auto` resolves to CPU.
 
-Anchors are delivered on the existing `text_progress` events, so clients need no
-change. Each anchor carries `progress_basis = native_cursor_v1` and
+Anchors use the existing `text_progress` event schema. Clients use the playback clock
+to map generated-audio progress to the position actually played. Each anchor carries
+`progress_basis = native_cursor_v1` and
 `progress_quality = aligned`; the built-in `ema` estimator remains the fallback when
 the head is not loaded or the session has no native tokens yet.
-
-The design document, the wire contract and the golden tests live upstream:
-
-- [`docs/dev/design/native_cursor_progress.md`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/docs/dev/design/native_cursor_progress.md)
-- [`engine/core/native_cursor/`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/tree/dev/engine/core/native_cursor)
-- [`tests/unit/engine_core/test_native_cursor.py`](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/dev/tests/unit/engine_core/test_native_cursor.py)
 
 ## Relation to this repository
 
@@ -155,4 +148,4 @@ expressions.
 
 The hook patches in this repository target upstream commit `0745e4a8`, which predates
 the observer. Running both mechanisms together requires the patch series to be rebased
-onto the `dev` branch; that work is tracked for the next release.
+onto an engine build that includes the matching NativeCursor runtime integration.

@@ -9,3 +9,12 @@ Python package.
 Third-party source and runtime components retain their own licenses. See
 THIRD_PARTY.md and the NOTICE files inside each submodule.
 
+The optional Chinese text-normalization adapter uses WeTextProcessing
+(Apache-2.0): https://github.com/wenet-e2e/WeTextProcessing
+
+The separately distributed X2Streaming-TTS-1.7B and
+X2-NativeCursor-Qwen3TTS-12Hz weights are released under Apache-2.0.
+Each model repository carries its own LICENSE and NOTICE. The TTS model
+derives from Qwen3-TTS-12Hz-1.7B-Base and includes the unchanged
+Qwen3-TTS-Tokenizer-12Hz, both released by the Qwen team under Apache-2.0.
+Those weights are not distributed by this method-code repository.
