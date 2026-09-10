@@ -14,6 +14,7 @@
   </p>
   <p>
     <a href="https://arxiv.org/abs/2608.18661"><img src="https://img.shields.io/badge/arXiv-2608.18661-b31b1b" alt="X2Streaming-TTS paper"></a>
+    <a href="https://arxiv.org/abs/2609.09677"><img src="https://img.shields.io/badge/arXiv-2609.09677-b31b1b" alt="X2-NativeCursor paper"></a>
     <a href="https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B"><img src="https://img.shields.io/badge/Hugging%20Face-X2Streaming--TTS--1.7B-yellow" alt="X2Streaming-TTS-1.7B weights"></a>
     <a href="https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz"><img src="https://img.shields.io/badge/Hugging%20Face-X2--NativeCursor-yellow" alt="X2-NativeCursor weights"></a>
     <a href="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml"><img src="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -48,6 +49,9 @@ submodule at commit `0745e4a8`.
 
 ## 🔥 News
 
+- **[2026-09-09] X2-NativeCursor paper on arXiv.**
+  [*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677)
+  is available, with its BibTeX entry in [Citation](#citation).
 - **[2026-09-07] X2-NativeCursor: reading progress read from the generator's own tokens.**
   Streaming TTS starts speaking before the sentence is finished, so a client receives
   audio without knowing which characters it carries. A 2M-parameter observer reads the
@@ -219,6 +223,8 @@ SaT-3L (0.940), which reads up to 48 future subwords.
 </div>
 
 ## X2-NativeCursor: reading progress from native tokens
+
+Paper: [*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677).
 
 Token-level streaming raises a second question the moment it works: **which characters
 is the audio I just received carrying?** Highlighting, barge-in accounting, subtitle
@@ -475,7 +481,7 @@ while it is still being written.
 | --- | --- | --- |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | Frame-synchronous streaming ASR with a turn-state head that predicts `idle` / `speaking` / `turn_end` / `backchannel` every 80 ms; ships a full-duplex dialogue demo that uses Qwen3TTS-Streaming as its TTS | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot's streaming TTS inference engine: exports Qwen3-TTS to ONNX/TensorRT and serves token-level streaming TTS with continuous batching, prefix cache, native WebSocket / OpenAI Realtime gateways and a Python/browser SDK; the method in this repository runs on it | — |
-| **X2Streaming-TTS** (this repository) | Causal commitment and causal speech-state inheritance on top of the engine, plus X2-NativeCursor progress tracking | [arXiv:2608.18661](https://arxiv.org/abs/2608.18661) |
+| **X2Streaming-TTS** (this repository) | Causal commitment and causal speech-state inheritance on top of the engine, plus X2-NativeCursor progress tracking | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661), [X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
 
 ## Citation
 
@@ -491,7 +497,19 @@ engine:
 }
 ```
 
-A machine-readable citation record is in [CITATION.cff](CITATION.cff).
+If you use X2-NativeCursor for text-progress tracking, please also cite:
+
+```bibtex
+@article{liu2026x2nativecursor,
+  title   = {X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS},
+  author  = {Liu, Zehan and Chen, Carl and Wen, Rime and Fu, Kaiqi and Lin, Altman and Qin, Shawn and Shi, Lights and Gan, Roy and Wang, Hao and Wang, Qian},
+  journal = {arXiv preprint arXiv:2609.09677},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2609.09677},
+}
+```
+
+The machine-readable citation record for X2Streaming-TTS is in [CITATION.cff](CITATION.cff).
 
 ## Acknowledgments
 

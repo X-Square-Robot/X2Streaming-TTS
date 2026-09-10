@@ -14,6 +14,7 @@
   </p>
   <p>
     <a href="https://arxiv.org/abs/2608.18661"><img src="https://img.shields.io/badge/arXiv-2608.18661-b31b1b" alt="X2Streaming-TTS paper"></a>
+    <a href="https://arxiv.org/abs/2609.09677"><img src="https://img.shields.io/badge/arXiv-2609.09677-b31b1b" alt="X2-NativeCursor paper"></a>
     <a href="https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B"><img src="https://img.shields.io/badge/Hugging%20Face-X2Streaming--TTS--1.7B-yellow" alt="X2Streaming-TTS-1.7B weights"></a>
     <a href="https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz"><img src="https://img.shields.io/badge/Hugging%20Face-X2--NativeCursor-yellow" alt="X2-NativeCursor weights"></a>
     <a href="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml"><img src="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -46,6 +47,9 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 
 ## 🔥 News
 
+- **[2026-09-09] X2-NativeCursor 论文上线 arXiv。**
+  [*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677)
+  已公开，BibTeX 见[引用](#引用)。
 - **[2026-09-07] X2-NativeCursor：从生成器自己的 token 里读出朗读进度。**
   流式 TTS 在句子写完之前就开始说话，客户端收到音频时需要知道它对应原文的哪几个字。
   X2-NativeCursor 是一个约 2M 参数的小模型，读取 Talker 每 80 ms 输出的 codebook-0
@@ -206,6 +210,8 @@ F1 达 0.952，略高于能预读 48 个未来子词的文本切分器 SaT-3L（
 </div>
 
 ## X2-NativeCursor：从原生 token 读出朗读进度
+
+论文：[*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677)。
 
 token 级流式一旦跑通，第二个问题立刻出现：**刚收到的这段音频，读的是原文的哪几个字？**
 随读高亮、用户打断时结算听到了多少、字幕时间轴、对话历史，都需要这个位置。"每个字
@@ -446,7 +452,7 @@ X2-Turn 判断用户何时说完，大模型逐 token 回复，X2Streaming-TTS �
 | --- | --- | --- |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | 帧同步的流式语音识别，带轮次状态头，每 80 ms 判断一次 `idle` / `speaking` / `turn_end` / `backchannel`；附带以 Qwen3TTS-Streaming 为 TTS 的全双工对话 demo | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot 的流式 TTS 推理引擎：把 Qwen3-TTS 导出为 ONNX/TensorRT，提供连续批处理、prefix cache、原生 WebSocket / OpenAI Realtime 网关，以及 Python 与浏览器 SDK；本仓库的方法就跑在它上面 | — |
-| **X2Streaming-TTS**（本仓库） | 引擎之上的因果承诺与因果语音状态继承，以及 X2-NativeCursor 进度跟踪 | [arXiv:2608.18661](https://arxiv.org/abs/2608.18661) |
+| **X2Streaming-TTS**（本仓库） | 引擎之上的因果承诺与因果语音状态继承，以及 X2-NativeCursor 进度跟踪 | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661)、[X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
 
 ## 引用
 
@@ -461,7 +467,19 @@ X2-Turn 判断用户何时说完，大模型逐 token 回复，X2Streaming-TTS �
 }
 ```
 
-机器可读的引用记录见 [CITATION.cff](CITATION.cff)。
+如果使用 X2-NativeCursor 进行文本进度跟踪，请同时引用：
+
+```bibtex
+@article{liu2026x2nativecursor,
+  title   = {X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS},
+  author  = {Liu, Zehan and Chen, Carl and Wen, Rime and Fu, Kaiqi and Lin, Altman and Qin, Shawn and Shi, Lights and Gan, Roy and Wang, Hao and Wang, Qian},
+  journal = {arXiv preprint arXiv:2609.09677},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2609.09677},
+}
+```
+
+X2Streaming-TTS 的机器可读引用记录见 [CITATION.cff](CITATION.cff)。
 
 ## 致谢
 
