@@ -278,6 +278,7 @@ def prepare_engine(args, root, state, statefile, name):
     env = {
         **os.environ,
         "ENV_NAME": str(root / "export-env"),
+        "PATH": str(root / "tools-env/bin") + os.pathsep + os.environ["PATH"],
         "WORKDIR": str(engine / "workspace"),
         "MODEL_VARIANT": "custom-1.7b",
         "SKIP_MODELS": "1",
