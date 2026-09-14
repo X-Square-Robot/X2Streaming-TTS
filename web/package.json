@@ -1,0 +1,29 @@
+{
+  "name": "x2streaming-demo-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @x-square-robot/x2streaming-demo --",
+    "build": "npm run build --workspace @xmultimodalinteraction/qwen3tts-browser && npm run build --workspace @x-square-robot/x2streaming-demo",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:server": "node scripts/contract-server.mjs",
+    "format:check": "prettier --check packages/demo/src --ignore-path .prettierignore",
+    "predev": "node scripts/write-notices.mjs",
+    "prebuild": "node scripts/write-notices.mjs"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "ws": "^8.21.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

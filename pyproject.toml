@@ -44,6 +44,7 @@ exclude = [
   "/.git",
   "/dist",
   "/third_party",
+  "/web",
 ]
 
 [tool.pytest.ini_options]

@@ -10,6 +10,13 @@
 The exact tested commit is recorded in `UPSTREAM_LOCK.json`. Source code from
 this dependency is not copied into `src/x2streaming_tts`.
 
+The independent `web/` project website includes the browser SDK and selected
+playback/progress components from upstream `dev` commit
+`9a4658498a24009f35495468ccabb6b1f10ea78a`, under MIT. This is a separate frontend
+pin and does not change the Python engine submodule lock. Source hashes and
+local adaptations are recorded in [web/upstream-source.json](web/upstream-source.json).
+The browser dependency and asset notices are in [web/NOTICE](web/NOTICE).
+
 ## Qwen3-TTS
 
 - Repository: https://github.com/QwenLM/Qwen3-TTS

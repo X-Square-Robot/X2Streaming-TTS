@@ -1,0 +1,13 @@
+{
+  "model": "custom-1.7b",
+  "task_type": "custom_voice",
+  "speaker": "Serena",
+  "input_mode": "full_text",
+  "sample_rate": 24000,
+  "audio_format": "audio/pcm",
+  "vad_enabled": false,
+  "vad_strategy": "disabled",
+  "delivery": "guarded",
+  "request_id": "golden-request",
+  "client_request_ts_ms": 123456
+}

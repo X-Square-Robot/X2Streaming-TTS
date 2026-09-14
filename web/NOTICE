@@ -1,0 +1,19 @@
+X2Streaming-TTS project demo
+Copyright (c) 2026 XSquareRobot
+
+The browser SDK and the playback/progress components in this demo originate
+from Qwen3TTS-Streaming, dev commit
+9a4658498a24009f35495468ccabb6b1f10ea78a, under the MIT License.
+The SDK runtime is unchanged. The copied playback components only remove
+a trailing blank line. One SDK test uses a relocated golden fixture; its
+assertions are unchanged.
+See upstream-source.json for the original source hashes.
+
+The project website, integration hook, connection controls and styling are
+part of X2Streaming-TTS. The mascot, recordings and paper figures are existing
+X Square Robot project assets. No model weights are bundled with the site.
+Separately distributed model weights retain their Apache-2.0 terms.
+
+This site bundles React, React DOM, Scheduler, Lucide React and Zod.
+The production build includes their full license texts in
+THIRD_PARTY_NOTICES.txt. Package versions are pinned in package-lock.json.

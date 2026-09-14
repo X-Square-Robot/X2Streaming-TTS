@@ -1,0 +1,49 @@
+{
+  "repository": "Qwen3TTS-Streaming",
+  "branch": "dev",
+  "commit": "9a4658498a24009f35495468ccabb6b1f10ea78a",
+  "license": "MIT",
+  "files": {
+    "packages/browser-sdk/LICENSE": "b1eaf31d69cea5a09429c36b021dd550301b2422deb2c9876ad1ce7b55f422bd",
+    "packages/browser-sdk/README.md": "97bef4f1d01b6446e04b377151d39e481acbfab0b6d01bee25507639f2514f71",
+    "packages/browser-sdk/README.zh-CN.md": "fd0e981cf6df15a23a4ba694f4d98d2b30bd2ed40b373d878698e0eaabcbc344",
+    "packages/browser-sdk/package.json": "f4cc6f8955d790e215cdd07f8c046e0435ae0951526dc337f7409d0eebd525d7",
+    "packages/browser-sdk/src/audio/audio.test.ts": "d607cf076a33e8b9e60c4638a19dfb0daf59e9ca628d6f0c6d8d7386428ba85f",
+    "packages/browser-sdk/src/audio/browser-audio-player.ts": "d989abde73bb4982f828cbeda2f785e536c63c727b83c90c534ca0b3a85657c3",
+    "packages/browser-sdk/src/audio/pcm-player-worklet.ts": "c44d62de2cd6a36b530fc4d1b0934e585b7339d31738e676fb82b8e636d1e81b",
+    "packages/browser-sdk/src/audio/playback-cursor.test.ts": "6cdc282eec676847a782b4d5f676ee43d51ebebeae23a114bd38e09afa923291",
+    "packages/browser-sdk/src/audio/playback-cursor.ts": "07db25d6ded644f73f3d16142e145bf972a5b98d8a7b41a113120e229145e157",
+    "packages/browser-sdk/src/audio/resampler.ts": "a70b3a2939072ef4aea587f8ee4d418bbe335290de7272dcd84ee7a4c9eb960c",
+    "packages/browser-sdk/src/audio/scheduled-buffer-player.ts": "1c267de6b57cfb2abf54475e67fd809632c0517f9521bb36099cbfb1246c94aa",
+    "packages/browser-sdk/src/audio/wav-collector.ts": "a13f915b22022c60c9dd75f4c6366537eedaf71b1c5677bc93906aea74601f3f",
+    "packages/browser-sdk/src/capabilities.test.ts": "ca2fd18634e4974b1e67962987ca19e2fd702bcf26833b0867347defd2585987",
+    "packages/browser-sdk/src/capabilities.ts": "9bbab6976e5b5975d5bff5785c50446b365b7ab9b2faaa626dfd1f7f2339e751",
+    "packages/browser-sdk/src/index.ts": "b586c97fad407fcd4991c9d53ff93e9a61349397c33ed037b54698e42ab8e121",
+    "packages/browser-sdk/src/random-id.test.ts": "65ad33279fd7c9292a48e7befa1ea3d323538e7a3afba56d2139e82a7042ffee",
+    "packages/browser-sdk/src/random-id.ts": "ebd47e60d382ad0d13b906460454b419745ac4b5f0d29dc54230c4773043ee6c",
+    "packages/browser-sdk/src/realtime-client.test.ts": "e12b628bb451e8ed09e1ce325a91049607f36d5eda47af750677d5b54a3bca0f",
+    "packages/browser-sdk/src/realtime-client.ts": "39130791604224a0bc90fc5f77a51f553deab7412e09155eb62f7a8c0363af8a",
+    "packages/browser-sdk/src/realtime-contract.test.ts": "1015624b785f92acb1f29ab2204645123e449a5f243737adf72a68e16a4d8c4c",
+    "packages/browser-sdk/src/realtime-contract.ts": "cd41892f9fc9a9458bca96e052ddc05885d52192a947345532a09498f9d872d0",
+    "packages/browser-sdk/src/types.ts": "a224c1ed7d210558fe1aaf9e1d0b4cd45facd4828ae70c2a9dce5ae05465601e",
+    "packages/browser-sdk/src/urls.ts": "01d5cf414dd44323ff5194acdc4b77af296d76b81d81487642b2bf692dec5a40",
+    "packages/browser-sdk/tsconfig.json": "fc1f3d1a3d6ad94ae99326ac465da1fdebc244ae32f27f33d4135f869183eac4",
+    "packages/demo/src/upstream/components/MediaPlayer.tsx": "b6038df926eabe2a37bd33352afb2edcd6421fe4037a0ca499f5eefa72b677c4",
+    "packages/demo/src/upstream/components/PlaybackWaveform.tsx": "032ef04ef7913b658061ddf45ce09c2ae01ce8481f30b29a06c69927ff1626e2",
+    "packages/demo/src/upstream/components/ProgressTrack.tsx": "4fbeb0141b11bb6340938254f1984b92642f7a42febfc79fd4f4d10d887fed55",
+    "packages/demo/src/upstream/components/audio-envelope.test.ts": "3d560edc8fb3b2301321c37635d1db22638fa19b6dbb31f8252fa36d153c50c5",
+    "packages/demo/src/upstream/components/audio-envelope.ts": "0618c1ed62ca1d16841647eec14c4feb83acd810d0c469bfd4f5a959c326ccad",
+    "packages/demo/src/upstream/components/media.css": "786853af27b24703859ad04c874cc0d2b56ad55642cb77f13211d15cbe40aba0",
+    "packages/demo/src/upstream/progress.test.ts": "bd0837e5abdb4151f20c4dbe9f180dcccfef876efc61a7680b6e415d371e931c",
+    "packages/demo/src/upstream/progress.ts": "7754bb5f1018755910a0158bd888ffdddd752b32657a381b10b99c60d24b76a9",
+    "tsconfig.base.json": "55a34feb136a84e482b177cca5873eba587661f9246fa2a459e1e1af16d9936c",
+    "packages/browser-sdk/src/fixtures/realtime-session-core.json": "58ee241bc11156c27a0b0676f36f254bb3efbbdf297ca1efdde7c3b3b6b36b97"
+  },
+  "local_changes": {
+    "packages/browser-sdk/src/realtime-client.test.ts": "Relocate golden fixture lookup to ./fixtures/realtime-session-core.json; assertions unchanged.",
+    "packages/demo/src/upstream/components/ProgressTrack.tsx": "Remove a trailing blank line; runtime unchanged."
+  },
+  "fixture_sources": {
+    "packages/browser-sdk/src/fixtures/realtime-session-core.json": "protocol/contracts/golden/realtime-session-core.json"
+  }
+}

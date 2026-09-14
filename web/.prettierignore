@@ -1,0 +1,4 @@
+packages/browser-sdk/**
+packages/demo/src/upstream/**
+**/dist/**
+**/node_modules/**

@@ -6,6 +6,9 @@ released under the MIT License. It uses Qwen3TTS-Streaming as an external git
 submodule; no upstream engine source is vendored into the X2Streaming-TTS
 Python package.
 
+The separate web/ demo includes MIT-licensed browser SDK and playback
+components from Qwen3TTS-Streaming. See web/NOTICE and web/upstream-source.json.
+
 Third-party source and runtime components retain their own licenses. See
 THIRD_PARTY.md and the NOTICE files inside each submodule.
 

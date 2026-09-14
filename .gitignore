@@ -19,4 +19,8 @@ workspace/
 .DS_Store
 .idea/
 .vscode/
-
+node_modules/
+.vite/
+web/.env*
+!web/.env.example
+web/packages/demo/public/THIRD_PARTY_NOTICES.txt

@@ -275,6 +275,11 @@ generated-audio progress into the position actually played. See the
 
 ## Demo
 
+The bilingual [project demo website](web/README.md) includes the existing mascot,
+recorded sessions, paper figures, and a WebSocket playground for a compatible
+engine. To preview locally: `cd web && npm ci && npm run dev`. Static hosting and
+engine connection instructions are in the [demo guide](web/README.md).
+
 The upstream engine ships a browser portal at `/demo/` with a Text Player, an LLM PK
 lab and a concurrency lab. These recordings were taken against a live engine, so the
 numbers on screen are live results.
