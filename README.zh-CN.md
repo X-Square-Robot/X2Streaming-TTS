@@ -54,8 +54,8 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
   流式 TTS 在句子写完之前就开始说话，客户端收到音频时需要知道它对应原文的哪几个字。
   X2-NativeCursor 是一个约 2M 参数的小模型，读取每个对应 80 ms 语音的 codebook-0
   token，实时给出"现在读到原文第几个字"，位置始终向前。整个过程只增加这一个小模型，
-  TTS 生成器、tokenizer 和声码器保持原样。观察器权重已单独发布；本次发布尚未包含
-  配套的运行时集成。见下文
+  TTS 生成器、tokenizer 和声码器保持原样。观察器权重已单独发布；配套运行时可通过 [Demo 快速启动](docs/quickstart.md) 获取，
+  实际能力仍需通过引擎发布验证。见下文
   [X2-NativeCursor](#x2-nativecursor从原生-token-读出朗读进度) 与
   [功能页](docs/native_cursor.zh-CN.md)。
 - **[2026-09-07] 权重开源。** 部署版 checkpoint
@@ -241,7 +241,7 @@ X2-NativeCursor 在**波形解码之前**就给出答案。每个 codebook-0 tok
 观察器可以为其他基于离散语音 token 的 TTS 重新训练；在 CosyVoice2 上用同一结构得到
 平均 0.284 个汉字的误差。发布的观察器头在
 [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)，
-使用时需要配套的 NativeCursor 运行时集成，本次发布尚未包含该实现。以下配置对应评测所用的参考实现：
+使用时需要配套的 NativeCursor 运行时集成，[Demo 快速启动](docs/quickstart.md) 使用新版引擎，能力启用仍需通过发布验证。以下配置仅对应评测所用的历史参考实现：
 
 ```yaml
 # Qwen3TTS-Streaming 的 engine.yaml
@@ -255,6 +255,20 @@ text_progress:
 [功能页](docs/native_cursor.zh-CN.md)。
 
 ## Demo
+
+打开[演示网站](https://x-square-robot.github.io/X2Streaming-TTS/)即可观看真实录屏。
+想输入自己的文本时，在 Linux NVIDIA GPU 机器执行：
+
+```bash
+git clone https://github.com/X-Square-Robot/X2Streaming-TTS.git
+cd X2Streaming-TTS
+bash quickstart.sh --public
+```
+
+脚本会自动下载并校验官方权重、编译 TensorRT、启动服务；真实音频检查通过后，
+输出“您的 WebSocket 地址是……”，复制到网页“实时体验”即可。需要 Python 3.12+、
+Docker Compose 和 NVIDIA Container Toolkit，首次编译需等待。
+[完整启动说明与限制](docs/quickstart.md)。
 
 新增中英文[项目演示网站](web/README.md)，沿用现有河狸吉祥物，包含真实录屏、
 论文方法图和连接兼容引擎的 WebSocket 体验区。本地运行：

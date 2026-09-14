@@ -1,0 +1,12 @@
+{
+  "engine_repository": "https://github.com/X-Square-Robot/Qwen3TTS-Streaming.git",
+  "engine_commit": "26aaf3990fbce34243281e2c5600f6fc6d84152e",
+  "tts_repository": "x-square-robot/X2Streaming-TTS-1.7B",
+  "tts_revision": "33858c61c73797136edd2e9bd427e2677c9b2601",
+  "tts_sha256": "666b32d4b73e861d39aad1495d95b6fa5dacad186c42d00ff39d52297cf67966",
+  "cursor_repository": "x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz",
+  "cursor_revision": "8f9fc9fe943346fb43a21da5b2cd7628e4659f4c",
+  "cursor_sha256": "aa94527fddff97cca0c337529a3b840b141d8301c4a6082557984438a7e584bc",
+  "cloudflared_image": "cloudflare/cloudflared:2026.9.1",
+  "demo_url": "https://x-square-robot.github.io/X2Streaming-TTS/"
+}

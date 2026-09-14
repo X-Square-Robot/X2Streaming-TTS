@@ -13,8 +13,8 @@
     "test": "npm run test --workspaces --if-present",
     "test:server": "node scripts/contract-server.mjs",
     "format:check": "prettier --check packages/demo/src --ignore-path .prettierignore",
-    "predev": "node scripts/write-notices.mjs",
-    "prebuild": "node scripts/write-notices.mjs"
+    "predev": "node scripts/write-notices.mjs && python3 ../tools/quickstart/build_starter.py",
+    "prebuild": "node scripts/write-notices.mjs && python3 ../tools/quickstart/build_starter.py"
   },
   "devDependencies": {
     "prettier": "^3.9.6",

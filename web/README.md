@@ -1,7 +1,7 @@
 # X2Streaming-TTS Demo
 
 A bilingual project website using the existing moon-holding beaver, real engine
-recordings, paper figures, and the Qwen3TTS-Streaming browser implementation.
+recordings, a downloadable quick start, and the Qwen3TTS-Streaming browser implementation.
 
 ## Run locally
 
@@ -16,6 +16,9 @@ Open `http://127.0.0.1:4173/`. The recorded demo works without an engine.
 No model inference runs in the browser or on the preview host.
 
 ## Live synthesis
+
+Start the matching engine with the [quick-start script](../docs/quickstart.md).
+It downloads the official weights, builds the runtime and prints a verified address.
 
 Select **Live playground**, enter the complete engine WebSocket address, and
 connect. The page first discovers `/v1/capabilities`, then opens the advertised
@@ -68,10 +71,9 @@ The standalone artifact is `packages/demo/dist/`. Relative asset URLs support
 hosting beneath a repository path. The build also includes full dependency
 license notices.
 
-The repository includes a **Demo Pages** workflow with a manual trigger. After
-pushing to GitHub, select **Settings → Pages → GitHub Actions**, then run
-**Actions → Demo Pages → Run workflow** from `main`. It does not publish on an
-ordinary push. The same `dist/` can be served by another static host.
+The repository includes a **Demo Pages** workflow that runs on website changes to `main`, or manually. After
+pushing to GitHub, select **Settings → Pages → GitHub Actions**, then use a website push or
+**Actions → Demo Pages → Run workflow** from `main`. The same `dist/` can be served by another static host.
 
 ## Frontend verification without a GPU
 

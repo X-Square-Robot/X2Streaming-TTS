@@ -1619,3 +1619,175 @@ a svg {
     transition: none !important;
   }
 }
+
+/* Keep the project story visual; technical setup has one dedicated section. */
+.scenarios-section {
+  padding-top: 72px;
+}
+.studio-section {
+  padding-top: 0;
+}
+#live {
+  scroll-margin-top: 95px;
+}
+.quickstart-section {
+  padding-top: 0;
+}
+.quickstart-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 45px;
+  align-items: start;
+}
+.quickstart-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 26px;
+}
+.quickstart-steps li {
+  display: flex;
+  gap: 15px;
+}
+.quickstart-steps li > span {
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dec8aa;
+  border-radius: 50%;
+  color: #ac6c33;
+  font-size: 12px;
+}
+.quickstart-steps h3 {
+  font-size: 17px;
+  margin: 2px 0 7px;
+}
+.quickstart-steps p {
+  font-size: 13px;
+  color: #787164;
+  margin: 0;
+}
+.quickstart-terminal {
+  background: #f1ede4;
+  border: 1px solid #ded5c4;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.terminal-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ded5c4;
+  font: 9px var(--utility);
+  color: #75664f;
+}
+.terminal-toolbar > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quickstart-terminal pre {
+  margin: 0;
+  padding: 23px 20px;
+  font: 11px/2 var(--utility);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #514b40;
+}
+.terminal-output {
+  padding: 18px 20px;
+  background: #eae4d7;
+  border-top: 1px solid #ded5c4;
+}
+.terminal-output small {
+  font-size: 10px;
+  color: #81745f;
+}
+.terminal-output p {
+  font-size: 12px;
+  margin: 12px 0 5px;
+}
+.terminal-output code {
+  font: 11px/1.8 var(--utility);
+  overflow-wrap: anywhere;
+  color: #9b591f;
+}
+.quickstart-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  align-items: center;
+}
+.quickstart-footer > p {
+  font-size: 11px;
+  color: #827969;
+  max-width: 470px;
+  margin: 0;
+}
+.quickstart-footer > div {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.playground-start {
+  font-size: 12px;
+  margin: 0 0 20px;
+  color: #827969;
+}
+.playground-start a {
+  color: var(--orange);
+  text-decoration: underline;
+}
+.paper-links {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #a25a28;
+}
+.citation-details summary {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 15px 0;
+  color: #79705f;
+}
+.citation-details[open] summary {
+  margin-bottom: 6px;
+}
+@media (max-width: 760px) {
+  .quickstart-layout {
+    grid-template-columns: 1fr;
+    gap: 27px;
+  }
+  .quickstart-footer {
+    display: block;
+  }
+  .quickstart-footer > div {
+    margin-top: 20px;
+    gap: 16px;
+  }
+  .terminal-toolbar {
+    padding: 14px;
+  }
+  .quickstart-terminal pre {
+    font-size: 10px;
+    padding: 18px 14px;
+  }
+  .quickstart-steps h3 {
+    font-size: 17px;
+  }
+  .quickstart-footer .button {
+    width: 100%;
+  }
+  .scenarios-section {
+    padding-top: 45px;
+  }
+}

@@ -13,6 +13,7 @@ import { assets, links } from "./assets";
 import { LanguageContext, useText, type Locale } from "./i18n";
 import { Studio } from "./Studio";
 import { Research } from "./Research";
+import { QuickStart } from "./QuickStart";
 
 export function App() {
   const [locale, setLocale] = useState<Locale>("en");
@@ -59,8 +60,8 @@ function Page({
             </span>
           </a>
           <nav aria-label={t("Main navigation", "主导航")}>
-            <a href="#demo">{t("Demo", "演示")}</a>
-            <a href="#method">{t("Method", "方法")}</a>
+            <a href="#scenarios">{t("What it does", "能做什么")}</a>
+            <a href="#quickstart">{t("Quick start", "自己试试")}</a>
             <a href="#resources">{t("Resources", "资源")}</a>
           </nav>
           <div className="nav-actions">
@@ -111,9 +112,9 @@ function Page({
               <strong>X2-NativeCursor</strong>
             </div>
             <div className="hero-actions">
-              <a className="button button-primary" href="#demo">
+              <a className="button button-primary" href="#scenarios">
                 <Play size={16} fill="currentColor" />
-                {t("Explore the demo", "开始体验")}
+                {t("Watch the demos", "看演示")}
                 <ArrowRight size={17} />
               </a>
               <a
@@ -175,60 +176,9 @@ function Page({
             <ArrowDown size={19} />
           </a>
         </div>
-        <Studio />
         <Scenarios />
-        <section
-          className="results-strip section"
-          aria-label={t("Selected paper results", "论文代表性结果")}
-        >
-          <div className="results-intro">
-            <p className="eyebrow">
-              {t("MEASURED IN THE PAPERS", "论文中的实测结果")}
-            </p>
-            <h3>
-              {t(
-                "Small delays.\nContinuous speech.",
-                "更短的等待，\n更连贯的声音。",
-              )}
-            </h3>
-            <a href={links.paper} target="_blank" rel="noreferrer">
-              {t("Evaluation details", "评测条件")}
-              <ArrowUpRight size={14} />
-            </a>
-          </div>
-          <div className="result">
-            <strong>
-              15.8<span> ms</span>
-            </strong>
-            <h4>{t("First audio token", "首个音频 token")}</h4>
-            <p>
-              {t("Median · 1 session · RTX 5090", "中位数 · 单路 · RTX 5090")}
-            </p>
-          </div>
-          <div className="result">
-            <strong>0.151</strong>
-            <h4>{t("Cursor MAE", "游标平均绝对误差")}</h4>
-            <p>
-              {t("Chinese characters · research test", "汉字 · 研究测试集")}
-            </p>
-            <a href={links.cursorPaper} target="_blank" rel="noreferrer">
-              {t("NativeCursor paper", "NativeCursor 论文")}
-              <ArrowUpRight size={12} />
-            </a>
-          </div>
-          <div className="result">
-            <strong>
-              22.61<span> Hz</span>
-            </strong>
-            <h4>{t("Boundary pitch jump", "边界音高跳变")}</h4>
-            <p>
-              {t(
-                "59 texts · 954 shared boundaries",
-                "59 段文本 · 954 个共同断点",
-              )}
-            </p>
-          </div>
-        </section>
+        <Studio />
+        <QuickStart />
         <Research />
       </main>
       <footer className="site-footer">
@@ -298,15 +248,18 @@ function Scenarios() {
     <section className="section scenarios-section" id="scenarios">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">02 / {t("IN THE REAL WORLD", "真实场景")}</p>
+          <p className="eyebrow">01 / {t("WHAT YOU CAN DO", "能做什么")}</p>
           <h2>
-            {t("Made for the flow of conversation.", "面向真实对话的节奏。")}
+            {t(
+              "Start sooner. Speak continuously.",
+              "更早开口，让对话顺畅继续。",
+            )}
           </h2>
         </div>
         <p>
           {t(
-            "Captured from the running engine. Explore what changes when speech no longer waits for a complete sentence.",
-            "来自运行中引擎的真实录屏。看看语音不再等待整句文本之后，会发生什么。",
+            "Three short recordings show what streaming speech changes. Click any clip to take a closer look.",
+            "用三个真实录屏，看清流式语音能带来什么。点击画面即可放大观看。",
           )}
         </p>
       </div>

@@ -24,3 +24,7 @@ node_modules/
 web/.env*
 !web/.env.example
 web/packages/demo/public/THIRD_PARTY_NOTICES.txt
+.x2-demo/
+web/packages/demo/public/x2streaming-quickstart.zip
+
+web/packages/demo/public/x2streaming-quickstart.zip

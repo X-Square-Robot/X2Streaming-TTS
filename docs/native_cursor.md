@@ -1,10 +1,12 @@
 **English** | [简体中文](native_cursor.zh-CN.md)
 
+> **Current Demo runtime:** The [quick start](quickstart.md) downloads the matching fused TensorRT engine. The CPU configuration and timings below describe the historical reference integration; current capabilities remain subject to runtime release checks.
+
 # X2-NativeCursor: reading progress from native tokens
 
 > Status: observer weights are available at
 > [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz).
-> The matching runtime integration is not included in this release. Configuration
+> The historical CPU runtime is not bundled in this method repository. Configuration
 > below describes the reference implementation used for evaluation. The hook patches
 > in this repository target upstream commit `0745e4a8`, which predates the observer.
 
@@ -117,7 +119,7 @@ hf download x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz \
 ```
 
 The following configuration requires an engine build that includes the NativeCursor
-runtime integration, which is not included in this release. In that build, place the
+historical CPU runtime integration, rather than the newer fused Demo runtime. In that build, place the
 head under `resources/native_cursor/` and select the native estimator:
 
 ```yaml

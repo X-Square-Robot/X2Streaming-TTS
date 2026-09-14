@@ -58,7 +58,8 @@ submodule at commit `0745e4a8`.
   codebook-0 tokens, each representing 80 ms of speech, and publishes a cursor into the source
   text that never moves backward. The generator, tokenizer and vocoder stay as they
   are; the observer is the only addition. Observer weights are available separately;
-  the matching runtime integration is not included in this release. See
+  the matching runtime is available through the [Demo quick start](docs/quickstart.md),
+  subject to its release capability checks. See
   [X2-NativeCursor](#x2-nativecursor-reading-progress-from-native-tokens) below and the
   [feature page](docs/native_cursor.md).
 - **[2026-09-07] Weights released.** The deployed checkpoint
@@ -257,9 +258,9 @@ order (`99%` → 百分之九十九). The generator, tokenizer and vocoder are u
 The observer retrains for other codec-based backbones; on CosyVoice2 it reaches a
 Chinese-character MAE of 0.284 with the same architecture. The released head is
 [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz),
-and requires a matching NativeCursor runtime integration. That integration is not
-included in this release; the following configuration describes the reference
-implementation used for evaluation:
+and requires a matching NativeCursor runtime integration. The [Demo quick start](docs/quickstart.md)
+uses the newer fused runtime, subject to its capability release checks. The following
+configuration describes only the historical reference implementation used for evaluation:
 
 ```yaml
 # engine.yaml in Qwen3TTS-Streaming
@@ -274,6 +275,20 @@ generated-audio progress into the position actually played. See the
 [feature page](docs/native_cursor.md) for the reference configuration and scope.
 
 ## Demo
+
+[Open the Demo](https://x-square-robot.github.io/X2Streaming-TTS/) to watch real recordings.
+To try your own text, start the matching engine on a Linux NVIDIA GPU machine:
+
+```bash
+git clone https://github.com/X-Square-Robot/X2Streaming-TTS.git
+cd X2Streaming-TTS
+bash quickstart.sh --public
+```
+
+The script downloads and verifies the official weights, builds TensorRT, and prints
+a WebSocket address after checking real audio. Paste it into **Live playground**.
+Requires Python 3.12+, Docker Compose and NVIDIA Container Toolkit; the first build
+takes time. [Full quick-start guide and limitations](docs/quickstart.md).
 
 The bilingual [project demo website](web/README.md) includes the existing mascot,
 recorded sessions, paper figures, and a WebSocket playground for a compatible

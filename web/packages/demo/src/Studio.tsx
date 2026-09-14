@@ -47,6 +47,14 @@ const presets = [
 export function Studio() {
   const t = useText();
   const [tab, setTab] = useState<"recording" | "live">("recording");
+  useEffect(() => {
+    const openLive = () => {
+      if (window.location.hash === "#live") setTab("live");
+    };
+    openLive();
+    window.addEventListener("hashchange", openLive);
+    return () => window.removeEventListener("hashchange", openLive);
+  }, []);
   return (
     <section
       className="section studio-section"
@@ -55,7 +63,9 @@ export function Studio() {
     >
       <div className="section-heading">
         <div>
-          <p className="eyebrow">01 / {t("LISTEN & EXPLORE", "试听与体验")}</p>
+          <p className="eyebrow">
+            02 / {t("SEE SPEECH IN SYNC", "让文字跟上声音")}
+          </p>
           <h2 id="demo-heading">
             {t("Hear it. Follow every word.", "听见声音，也看见进度。")}
           </h2>
@@ -67,7 +77,7 @@ export function Studio() {
           )}
         </p>
       </div>
-      <div className="studio-shell">
+      <div className="studio-shell" id="live">
         <div className="studio-bar">
           <div
             role="tablist"
@@ -195,11 +205,11 @@ function Recording() {
           </li>
           <li>
             <span>2</span>
-            {t("Native tokens reveal progress", "从原生 token 读出进度")}
+            {t("Speech begins playing", "语音开始播放")}
           </li>
           <li>
             <span>3</span>
-            {t("Highlight follows the playback clock", "高亮跟随实际播放时钟")}
+            {t("Follow the words you have heard", "高亮跟随已经听到的文字")}
           </li>
         </ol>
         <button
@@ -302,6 +312,14 @@ function LivePlayground() {
 
   return (
     <div className="live-playground">
+      {!connection && (
+        <p className="playground-start">
+          {t("Need a WebSocket address?", "还没有 WebSocket 地址？")}{" "}
+          <a href="#quickstart">
+            {t("Run the quick start →", "运行快速启动脚本 →")}
+          </a>
+        </p>
+      )}
       <div className="connection-summary">
         <span>
           <i className={`status-dot ${connection ? "connected" : "offline"}`} />

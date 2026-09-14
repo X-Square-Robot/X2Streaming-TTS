@@ -1,10 +1,12 @@
 [English](native_cursor.md) | **简体中文**
 
+> **新版 Demo 运行时：** [快速启动](quickstart.md) 会获取配套的融合 TensorRT 引擎。下文的 CPU 配置和性能数字属于历史参考实现；新版能力需通过运行时发布验证。
+
 # X2-NativeCursor：从原生 token 读出朗读进度
 
 > 状态：观察器权重已发布在
 > [`x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz`](https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz)。
-> 本次发布尚未包含配套的运行时集成，下文配置对应评测所用的参考实现。
+> 历史 CPU 运行时未打包在本方法仓库内；下文配置对应评测所用的参考实现。
 > 本仓库的 hook 补丁对应上游引擎提交 `0745e4a8`，早于观察器的加入。
 
 ## 问题

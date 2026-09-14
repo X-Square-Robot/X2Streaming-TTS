@@ -1,6 +1,15 @@
 name: Demo Pages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "docs/assets/**"
+      - "tools/quickstart/**"
+      - "quickstart.sh"
+      - "docs/quickstart.md"
+      - ".github/workflows/demo-pages.yml"
   workflow_dispatch:
 
 permissions:
