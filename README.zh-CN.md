@@ -93,7 +93,6 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 - [X2Streaming-TTS 做了什么](#x2streaming-tts-做了什么)
 - [实验结果](#实验结果)
 - [X2-NativeCursor：从原生 token 读出朗读进度](#x2-nativecursor从原生-token-读出朗读进度)
-- [Demo](#demo)
 - [快速开始](#快速开始)
 - [仓库布局](#仓库布局)
 - [状态与限制](#状态与限制)
@@ -260,52 +259,6 @@ text_progress:
 参考实现通过 `text_progress` 事件下发进度，事件里带 `progress_basis=native_cursor_v1`。
 客户端结合播放时钟，将已生成音频的进度换算为实际已播放的位置。参考配置与适用范围见
 [功能页](docs/native_cursor.zh-CN.md)。
-
-## Demo
-
-打开[演示网站](https://x-square-robot.github.io/X2Streaming-TTS/)即可观看真实录屏。
-想输入自己的文本时，在 Linux NVIDIA GPU 机器执行：
-
-```bash
-git clone https://github.com/X-Square-Robot/X2Streaming-TTS.git
-cd X2Streaming-TTS
-bash quickstart.sh --public
-```
-
-脚本会自动下载并校验官方权重、编译 TensorRT、启动服务；真实音频检查通过后，
-输出“您的 WebSocket 地址是……”，复制到网页“实时体验”即可。需要 Python 3.12+、
-Docker Compose 和 NVIDIA Container Toolkit，首次编译需等待。
-[完整启动说明与限制](docs/quickstart.md)。
-
-新增中英文[项目演示网站](web/README.md)，沿用现有河狸吉祥物，包含真实录屏、
-论文方法图和连接兼容引擎的 WebSocket 体验区。本地运行：
-`cd web && npm ci && npm run dev`。静态部署与引擎连接方式见[演示说明](web/README.md)。
-
-上游引擎自带浏览器门户 `/demo/`，包含文本播放器、LLM PK 实验台和并发实验台。以下录屏
-都是对着真实引擎录制的，屏幕上的数字都是实时结果。
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/assets/demo_text_player.gif" alt="文本播放器：一个解码步就是一个音频块，token 步与 PAD 冲刷步原样展示">
-      <br><sub><b>文本播放器。</b>播放进度和引擎的解码步同步，哪一步在读字、哪一步在冲刷尾音，都实时可见。</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/assets/demo_llm_pk.gif" alt="LLM PK：流式 TTS 在大模型写完之前就开口，离线 TTS 要等最后一个 token">
-      <br><sub><b>LLM PK。</b>按选定速率模拟上游大模型出词：token 级 TTS 先开口，离线 TTS 还在等最后一个字。</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <img src="docs/assets/demo_multi_stream.gif" width="640" alt="多路合成：128 路及其 TTFT 分布，每路都有真实音频">
-      <br><sub><b>多路合成。</b>128 路并发会话及各自的首包时延分布；点任意一路可听真实音频。</sub>
-    </td>
-  </tr>
-</table>
-
-要运行门户，先部署上游引擎，再打开实例上的 `/demo/`；见上游引擎的
-[部署指南](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/deployment.zh-CN.md)。
-[News](#-news) 中的 X2-NativeCursor 录屏使用[功能页](docs/native_cursor.zh-CN.md)所述的参考集成。
 
 ## 快速开始
 

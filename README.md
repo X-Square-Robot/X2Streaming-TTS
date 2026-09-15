@@ -99,7 +99,6 @@ Each model card lists the files, SHA-256 checksums, usage and scope.
 - [What X2Streaming-TTS does](#what-x2streaming-tts-does)
 - [Results](#results)
 - [X2-NativeCursor: reading progress from native tokens](#x2-nativecursor-reading-progress-from-native-tokens)
-- [Demo](#demo)
 - [Getting started](#getting-started)
 - [Repository layout](#repository-layout)
 - [Status and limitations](#status-and-limitations)
@@ -280,55 +279,6 @@ The reference implementation emits `text_progress` events with
 `progress_basis=native_cursor_v1`. Clients use the playback clock to translate
 generated-audio progress into the position actually played. See the
 [feature page](docs/native_cursor.md) for the reference configuration and scope.
-
-## Demo
-
-[Open the Demo](https://x-square-robot.github.io/X2Streaming-TTS/) to watch real recordings.
-To try your own text, start the matching engine on a Linux NVIDIA GPU machine:
-
-```bash
-git clone https://github.com/X-Square-Robot/X2Streaming-TTS.git
-cd X2Streaming-TTS
-bash quickstart.sh --public
-```
-
-The script downloads and verifies the official weights, builds TensorRT, and prints
-a WebSocket address after checking real audio. Paste it into **Live playground**.
-Requires Python 3.12+, Docker Compose and NVIDIA Container Toolkit; the first build
-takes time. [Full quick-start guide and limitations](docs/quickstart.md).
-
-The bilingual [project demo website](web/README.md) includes the existing mascot,
-recorded sessions, paper figures, and a WebSocket playground for a compatible
-engine. To preview locally: `cd web && npm ci && npm run dev`. Static hosting and
-engine connection instructions are in the [demo guide](web/README.md).
-
-The upstream engine ships a browser portal at `/demo/` with a Text Player, an LLM PK
-lab and a concurrency lab. These recordings were taken against a live engine, so the
-numbers on screen are live results.
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/assets/demo_text_player.gif" alt="Text Player: one decode step is one audio chunk; token steps and PAD flush steps are shown as-is">
-      <br><sub><b>Text Player.</b> Playback synced to engine decode steps. Token steps and PAD flush steps are shown as they happen.</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/assets/demo_llm_pk.gif" alt="LLM PK: streaming TTS starts speaking before the language model finishes while offline TTS waits for the last token">
-      <br><sub><b>LLM PK.</b> Simulate an upstream language model at a chosen token rate and watch token-level TTS start speaking while offline TTS is still waiting.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <img src="docs/assets/demo_multi_stream.gif" width="640" alt="Multi-stream synthesis: 128 lanes with TTFT distribution and real per-lane audio">
-      <br><sub><b>Multi-stream synthesis.</b> 128 concurrent sessions with their TTFT distribution; click a lane to hear its real audio.</sub>
-    </td>
-  </tr>
-</table>
-
-To run the portal, deploy the upstream engine and open `/demo/` on the running
-instance; see the upstream [deployment guide](https://github.com/X-Square-Robot/Qwen3TTS-Streaming/blob/main/docs/user/deployment.md).
-The X2-NativeCursor recording in [News](#-news) uses the reference integration
-described on the [feature page](docs/native_cursor.md).
 
 ## Getting started
 
