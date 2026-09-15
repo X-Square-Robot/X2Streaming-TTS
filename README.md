@@ -27,6 +27,12 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
+### ▶ [Explore the Demo](https://x-square-robot.github.io/X2Streaming-TTS/)
+
+**X2Streaming-TTS + X2-NativeCursor** — watch the 14-second speech-and-highlight recording, explore the scenarios, or connect your engine in the browser.
+
+[Watch the recording](docs/assets/native_cursor_lab.mp4) · [Run locally](docs/quickstart.md)
+
 <div align="center">
   <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2Streaming-TTS and X2-NativeCursor scenarios: speaking as text arrives, continuous narration, synchronized highlighting, playback-aware interruption, and dialogue history that retains played content">
   <p><em>Illustrative scenarios for X2Streaming-TTS and X2-NativeCursor: start speaking as text arrives, maintain voice continuity across segments, synchronize text highlighting, use the playback clock to account for interruptions, and retain played content in dialogue history.</em></p>
@@ -49,6 +55,7 @@ submodule at commit `0745e4a8`.
 
 ## 🔥 News
 
+- **[2026-09-15] The [Demo website](https://x-square-robot.github.io/X2Streaming-TTS/) is live.** Explore X2Streaming-TTS and X2-NativeCursor, including a [14-second recording with audio](docs/assets/native_cursor_lab.mp4) showing synchronized text highlighting. Connect a compatible engine for interactive synthesis.
 - **[2026-09-09] X2-NativeCursor paper on arXiv.**
   [*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677)
   is available, with its BibTeX entry in [Citation](#citation).

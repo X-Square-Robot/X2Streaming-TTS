@@ -27,6 +27,12 @@
 
 [English](README.md) | **简体中文**
 
+### ▶ [打开 Demo 展示页](https://x-square-robot.github.io/X2Streaming-TTS/)
+
+**X2Streaming-TTS + X2-NativeCursor**：观看 14 秒语音与随读高亮演示，浏览应用场景，也可在浏览器中连接自己的引擎进行交互。
+
+[观看带声音的演示视频](docs/assets/native_cursor_lab.mp4) · [本地启动](docs/quickstart.md)
+
 <div align="center">
   <img src="docs/assets/native_cursor_use_cases.png" width="1000" alt="X2Streaming-TTS 与 X2-NativeCursor 应用场景：边接收文本边发声、连续朗读、同步高亮、基于播放进度的打断处理，以及保留已播放内容的对话历史">
   <p><em>X2Streaming-TTS 与 X2-NativeCursor 的应用示意：文本逐步到达时开始发声，跨片段维持语音连续，按朗读进度同步高亮，结合播放时钟处理打断，并以已播放内容更新对话历史。</em></p>
@@ -47,6 +53,7 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 
 ## 🔥 News
 
+- **[2026-09-15] [Demo 展示页](https://x-square-robot.github.io/X2Streaming-TTS/)上线。** 集中展示 X2Streaming-TTS 与 X2-NativeCursor，提供[带声音的 14 秒演示](docs/assets/native_cursor_lab.mp4)，观看原文随朗读同步高亮；连接兼容引擎后可交互合成。
 - **[2026-09-09] X2-NativeCursor 论文上线 arXiv。**
   [*X2-NativeCursor: Native-Token Text Progress Tracking for Incremental-Text Streaming Codec TTS*](https://arxiv.org/abs/2609.09677)
   已公开，BibTeX 见[引用](#引用)。
