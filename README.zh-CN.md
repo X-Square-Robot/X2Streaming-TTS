@@ -15,6 +15,7 @@
   <p>
     <a href="https://arxiv.org/abs/2608.18661"><img src="https://img.shields.io/badge/arXiv-2608.18661-b31b1b" alt="X2Streaming-TTS paper"></a>
     <a href="https://arxiv.org/abs/2609.09677"><img src="https://img.shields.io/badge/arXiv-2609.09677-b31b1b" alt="X2-NativeCursor paper"></a>
+    <a href="https://x-square-robot.github.io/X2Streaming-TTS/"><img src="https://img.shields.io/badge/Demo-%E5%9C%A8%E7%BA%BF%E6%BC%94%E7%A4%BA-ff7a18" alt="Demo · 在线演示"></a>
     <a href="https://huggingface.co/x-square-robot/X2Streaming-TTS-1.7B"><img src="https://img.shields.io/badge/Hugging%20Face-X2Streaming--TTS--1.7B-yellow" alt="X2Streaming-TTS-1.7B weights"></a>
     <a href="https://huggingface.co/x-square-robot/X2-NativeCursor-Qwen3TTS-12Hz"><img src="https://img.shields.io/badge/Hugging%20Face-X2--NativeCursor-yellow" alt="X2-NativeCursor weights"></a>
     <a href="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml"><img src="https://github.com/X-Square-Robot/X2Streaming-TTS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
