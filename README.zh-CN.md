@@ -101,7 +101,6 @@ Streaming Text with Speech-State Inheritance*](https://arxiv.org/abs/2608.18661)
 - [引用](#引用)
 - [致谢](#致谢)
 - [许可](#许可)
-- [Star History](#star-history)
 
 ## token 级流式为什么难
 
@@ -413,6 +412,7 @@ X2-Turn 判断用户何时说完，大模型逐 token 回复，X2Streaming-TTS �
 
 | 项目 | 做什么 | 论文 |
 | --- | --- | --- |
+| [**X2Streaming-ASR**](https://github.com/X-Square-Robot/X2Streaming-asr) | 面向中文、英文与中英混合语音的低延迟流式语音识别；自适应等待上下文或提交新文本，输出只追加、不回改 | [arXiv:2609.08672](https://arxiv.org/abs/2609.08672) |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | 帧同步的流式语音识别，带轮次状态头，每 80 ms 判断一次 `idle` / `speaking` / `turn_end` / `backchannel`；附带以 Qwen3TTS-Streaming 为 TTS 的全双工对话 demo | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot 的流式 TTS 推理引擎：把 Qwen3-TTS 导出为 ONNX/TensorRT，提供连续批处理、prefix cache、原生 WebSocket / OpenAI Realtime 网关，以及 Python 与浏览器 SDK；本仓库的方法就跑在它上面 | — |
 | **X2Streaming-TTS**（本仓库） | 引擎之上的因果承诺与因果语音状态继承，附配套 X2-NativeCursor 观察器的说明 | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661)、[X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
@@ -453,6 +453,8 @@ X2Streaming-TTS 建立在开源语音社区的模型、引擎与工具之上。�
   依赖这三点。
 - [Qwen3TTS-Streaming](https://github.com/X-Square-Robot/Qwen3TTS-Streaming)：本方法所
   运行的 TensorRT 导出、调度器、网关与 SDK。
+- [X2Streaming-ASR](https://github.com/X-Square-Robot/X2Streaming-asr)：在低延迟、只追加不回改的
+  流式语音识别方向开展的互补工作。
 - [X2-Turn](https://github.com/X-Square-Robot/X2-Turn)：其全双工对话 demo 端到端地
   检验了引擎。
 - [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing)：发布的正则化器所用
@@ -468,7 +470,3 @@ X2Streaming-TTS 代码以 [MIT 许可](LICENSE)发布，Copyright (c) 2026 XSqua
 发布的模型权重为 Apache-2.0；固定版本的上游引擎为 MIT；Qwen3-TTS 为 Apache 2.0；
 NVIDIA 运行时镜像与可选的 TEN VAD 依赖各自保留其条款。见 [THIRD_PARTY.md](THIRD_PARTY.md)
 与 [NOTICE](NOTICE)。
-
-## Star History
-
-[![GitHub Star 增长趋势](https://api.star-history.com/chart?repos=X-Square-Robot/X2Streaming-TTS&type=date&legend=top-left)](https://www.star-history.com/?repos=X-Square-Robot%2FX2Streaming-TTS&type=date&legend=top-left)

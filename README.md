@@ -107,7 +107,6 @@ Each model card lists the files, SHA-256 checksums, usage and scope.
 - [Citation](#citation)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
-- [Star History](#star-history)
 
 ## Why token-level streaming is hard
 
@@ -445,6 +444,7 @@ while it is still being written.
 
 | Project | What it does | Paper |
 | --- | --- | --- |
+| [**X2Streaming-ASR**](https://github.com/X-Square-Robot/X2Streaming-asr) | Low-latency, append-only streaming speech recognition for Chinese, English and code-switching speech; adaptively waits for context or commits new text without revising earlier output | [arXiv:2609.08672](https://arxiv.org/abs/2609.08672) |
 | [**X2-Turn**](https://github.com/X-Square-Robot/X2-Turn) | Frame-synchronous streaming ASR with a turn-state head that predicts `idle` / `speaking` / `turn_end` / `backchannel` every 80 ms; ships a full-duplex dialogue demo that uses Qwen3TTS-Streaming as its TTS | [arXiv:2608.10878](https://arxiv.org/abs/2608.10878) |
 | [**Qwen3TTS-Streaming**](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) | X Square Robot's streaming TTS inference engine: exports Qwen3-TTS to ONNX/TensorRT and serves token-level streaming TTS with continuous batching, prefix cache, native WebSocket / OpenAI Realtime gateways and a Python/browser SDK; the method in this repository runs on it | — |
 | **X2Streaming-TTS** (this repository) | Causal commitment and causal speech-state inheritance on top of the engine, with documentation for the companion X2-NativeCursor observer | [X2Streaming-TTS](https://arxiv.org/abs/2608.18661), [X2-NativeCursor](https://arxiv.org/abs/2609.09677) |
@@ -487,6 +487,8 @@ community. We thank:
   cache capacity make strict causality implementable.
 - [Qwen3TTS-Streaming](https://github.com/X-Square-Robot/Qwen3TTS-Streaming) for the
   TensorRT export, scheduler, gateways and SDK this method runs on.
+- [X2Streaming-ASR](https://github.com/X-Square-Robot/X2Streaming-asr) for its
+  complementary work on low-latency, append-only streaming speech recognition.
 - [X2-Turn](https://github.com/X-Square-Robot/X2-Turn) for the full-duplex dialogue demo
   that exercises the engine end to end.
 - [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing) for the Chinese text
@@ -503,7 +505,3 @@ XSquareRobot. The released model weights are Apache-2.0; the pinned upstream eng
 MIT; Qwen3-TTS is Apache 2.0; NVIDIA runtime images and the optional TEN VAD dependency
 keep their own terms. See
 [THIRD_PARTY.md](THIRD_PARTY.md) and [NOTICE](NOTICE).
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=X-Square-Robot/X2Streaming-TTS&type=date&legend=top-left)](https://www.star-history.com/?repos=X-Square-Robot%2FX2Streaming-TTS&type=date&legend=top-left)
